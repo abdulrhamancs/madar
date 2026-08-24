@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { supabase, usernameToAuthEmail } from "./lib/supabaseClient";
 import { createT, type Lang } from "./lib/i18n";
+import { initialsOf } from "./lib/initials";
 import { I18nProvider, useI18n } from "./lib/i18nContext";
 import { ToastProvider, useToast } from "./ui/Toast";
 import { AppShell, type PageId } from "./components/AppShell";
 import { Intro } from "./components/Intro";
 import { ConfirmDialog, Modal } from "./ui/Modal";
-import { Badge } from "./ui/Badge";
+import { Badge, Tag } from "./ui/Badge";
 import { ErrorState } from "./ui/States";
 import { HomePage } from "./pages/HomePage";
 import { StructurePage } from "./pages/StructurePage";
@@ -20,7 +21,6 @@ import { AdminPage } from "./pages/AdminPage";
 import { AuthPage } from "./pages/AuthPage";
 import { CommitteesPage } from "./pages/CommitteesPage";
 import { LinkedinIcon, XIcon } from "./ui/BrandIcons";
-import { User } from "lucide-react";
 
 // ==========================================
 // 🔌 Supabase row <-> app-shape mappers  (unchanged)
@@ -90,28 +90,44 @@ const pageToPath = (page: PageId) => (page === "home" ? "/" : `/${page}`);
 // ==========================================
 // Root: owns the preferences that drive <html lang/dir/class>
 // ==========================================
+const PREFS_KEY = "madar-preferences";
+
+/**
+ * Stored preferences, read once before the first render.
+ *
+ * This has to be a lazy `useState` initialiser rather than a `useEffect`.
+ * Reading in an effect meant the *write* effect below ran in the same commit
+ * with the initial defaults still in scope, overwriting the stored value with
+ * `{ isDarkMode: false }` before the read's state update had landed. Under
+ * StrictMode's double-invoked effects the second read then picked up the
+ * clobbered value, so a chosen theme or language never survived a reload.
+ * Seeding state directly also avoids a flash of the wrong theme on load.
+ */
+function readPrefs(): { isDarkMode: boolean; lang: Lang } {
+  const fallback = { isDarkMode: false, lang: "ar" as Lang };
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (!raw) return fallback;
+    const prefs = JSON.parse(raw);
+    return {
+      isDarkMode:
+        typeof prefs?.isDarkMode === "boolean"
+          ? prefs.isDarkMode
+          : fallback.isDarkMode,
+      lang: prefs?.lang === "en" || prefs?.lang === "ar" ? prefs.lang : fallback.lang,
+    };
+  } catch (e) {
+    console.error("Error parsing prefs", e);
+    return fallback;
+  }
+}
+
 export default function App() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [lang, setLang] = useState<Lang>("ar");
+  const [isDarkMode, setIsDarkMode] = useState(() => readPrefs().isDarkMode);
+  const [lang, setLang] = useState<Lang>(() => readPrefs().lang);
 
   useEffect(() => {
-    try {
-      const prefsStr = localStorage.getItem("madar-preferences");
-      if (prefsStr) {
-        const prefs = JSON.parse(prefsStr);
-        if (prefs?.isDarkMode !== undefined) setIsDarkMode(prefs.isDarkMode);
-        if (prefs?.lang) setLang(prefs.lang);
-      }
-    } catch (e) {
-      console.error("Error parsing prefs", e);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "madar-preferences",
-      JSON.stringify({ isDarkMode, lang })
-    );
+    localStorage.setItem(PREFS_KEY, JSON.stringify({ isDarkMode, lang }));
   }, [isDarkMode, lang]);
 
   return (
@@ -1024,14 +1040,16 @@ function MadarApp({
       >
         {viewUserModal && (
           <div className="flex flex-col items-center text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full border border-accent/40 bg-accent/10">
-              <User className="h-7 w-7 text-accent" aria-hidden="true" />
+            <span className="flex h-20 w-20 items-center justify-center rounded-full border border-accent/35 bg-accent/[0.07]">
+              <span className="text-h2 font-medium text-accent">
+                {initialsOf(viewUserModal.fullName)}
+              </span>
             </span>
-            <p className="mt-3 text-small text-muted" dir="ltr">
+            <p className="latin mt-4 text-small text-faint" dir="ltr">
               @{viewUserModal.username}
             </p>
             {viewUserModal.badges?.length > 0 && (
-              <ul className="mt-4 flex flex-wrap justify-center gap-2">
+              <ul className="mt-5 flex flex-wrap justify-center gap-2">
                 {viewUserModal.badges.map((badge: string) => (
                   <li key={badge}>
                     <Badge tone="accent">{badge}</Badge>
@@ -1039,17 +1057,26 @@ function MadarApp({
                 ))}
               </ul>
             )}
+            {viewUserModal.committees?.length > 0 && (
+              <ul className="mt-3 flex flex-wrap justify-center gap-2">
+                {viewUserModal.committees.map((committee: string) => (
+                  <li key={committee}>
+                    <Tag>{committee}</Tag>
+                  </li>
+                ))}
+              </ul>
+            )}
             {(viewUserModal.linkedin || viewUserModal.twitter) && (
-              <div className="mt-5 flex gap-2">
+              <div className="mt-7 flex gap-2 border-t border-divider pt-6">
                 {viewUserModal.linkedin && (
                   <a
                     href={viewUserModal.linkedin}
                     target="_blank"
                     rel="noreferrer"
                     aria-label="LinkedIn"
-                    className="flex h-11 w-11 items-center justify-center rounded-md border border-divider text-accent transition-colors duration-quick hover:bg-ink/[0.04]"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-divider text-accent transition-colors duration-quick hover:border-accent/50 hover:bg-accent/[0.06]"
                   >
-                    <LinkedinIcon className="h-4.5 w-4.5" />
+                    <LinkedinIcon className="h-4 w-4" />
                   </a>
                 )}
                 {viewUserModal.twitter && (
@@ -1058,9 +1085,9 @@ function MadarApp({
                     target="_blank"
                     rel="noreferrer"
                     aria-label="X"
-                    className="flex h-11 w-11 items-center justify-center rounded-md border border-divider text-accent transition-colors duration-quick hover:bg-ink/[0.04]"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-divider text-accent transition-colors duration-quick hover:border-accent/50 hover:bg-accent/[0.06]"
                   >
-                    <XIcon className="h-4.5 w-4.5" />
+                    <XIcon className="h-4 w-4" />
                   </a>
                 )}
               </div>
@@ -1080,11 +1107,11 @@ function MadarApp({
         {(viewEventUsers?.registeredUsers || []).length === 0 ? (
           <p className="text-small text-muted">{t("event_no_registrations")}</p>
         ) : (
-          <ul className="space-y-1.5">
+          <ul className="divide-y divide-divider border-y border-divider">
             {viewEventUsers?.registeredUsers.map((username: string) => (
               <li
                 key={username}
-                className="rounded-md border border-divider px-3 py-2 text-small text-ink"
+                className="latin py-2.5 text-small text-ink"
                 dir="ltr"
               >
                 @{username}

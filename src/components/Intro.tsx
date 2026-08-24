@@ -1,11 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import { useI18n } from "../lib/i18nContext";
-import { OrbitLogo } from "../ui/BrandIcons";
+import { MadarMark } from "../ui/MadarMark";
 
 /**
- * Brand beat, not a toll booth. The original blocked for 4s (twice during
- * registration); this runs ~1.2s, is skippable by any key, tap or the visible
- * button, and never gates data — fetching continues underneath it.
+ * Brand beat, not a toll booth. Runs ~1.2s, is skippable by any key, tap or
+ * the visible button, and never gates data — fetching continues underneath it.
  * Reduced-motion users get a static mark and a short fade.
  */
 const DURATION = 1200;
@@ -43,18 +42,35 @@ export function Intro({
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-0 z-intro flex flex-col items-center justify-center gap-6 bg-canvas px-6 text-center animate-fade-in"
+      className="fixed inset-0 z-intro flex animate-fade-in flex-col items-center justify-center gap-9 bg-canvas px-6 text-center"
     >
-      <OrbitLogo className="h-24 w-24" animate />
-      <div>
+      {/* concentric rings echo the hero, so the transition into the app reads
+          as one continuous idea rather than a separate splash */}
+      <div className="relative flex h-52 w-52 items-center justify-center">
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 rounded-full border border-divider"
+        />
+        <span
+          aria-hidden="true"
+          className="absolute inset-7 rounded-full border border-divider/70"
+        />
+        <MadarMark className="h-24 w-24" animate />
+      </div>
+
+      <div
+        className="enter"
+        style={{ ["--enter-delay" as string]: "260ms" }}
+      >
         <p className="font-display text-h1 text-ink">{t("madar_club")}</p>
-        <p className="mt-2 text-small text-muted">{message}</p>
+        <p className="mt-3 text-body text-muted">{message}</p>
       </div>
 
       <button
         type="button"
         onClick={onDone}
-        className="mt-2 min-h-[44px] rounded-md px-4 text-small font-medium text-muted transition-colors duration-quick hover:text-ink"
+        className="enter min-h-[44px] rounded-md px-4 text-small font-medium text-faint transition-colors duration-quick hover:text-ink"
+        style={{ ["--enter-delay" as string]: "420ms" }}
       >
         {t("skip")}
       </button>

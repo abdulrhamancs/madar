@@ -17,7 +17,7 @@ export interface ModalProps {
   size?: "sm" | "md" | "lg";
 }
 
-const SIZES = { sm: "max-w-sm", md: "max-w-lg", lg: "max-w-2xl" } as const;
+const SIZES = { sm: "max-w-md", md: "max-w-xl", lg: "max-w-3xl" } as const;
 
 /**
  * The single dialog primitive for the app — replaces five ad-hoc overlays that
@@ -87,7 +87,7 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-modal flex items-end justify-center sm:items-center sm:p-6">
       <div
-        className="absolute inset-0 animate-fade-in bg-[rgb(var(--scrim)/0.55)]"
+        className="absolute inset-0 animate-fade-in bg-[rgb(var(--scrim)/0.5)] backdrop-blur-[2px]"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -100,20 +100,20 @@ export function Modal({
         tabIndex={-1}
         onKeyDown={handleKeyDown}
         className={cx(
-          "relative w-full bg-surface shadow-overlay",
+          "relative w-full border border-divider bg-surface shadow-overlay",
           // Bottom sheet on phones, centred dialog from `sm` up.
-          "max-h-[90dvh] overflow-y-auto rounded-t-lg animate-sheet-up",
-          "sm:rounded-lg sm:animate-scale-in",
+          "max-h-[90dvh] overflow-y-auto rounded-t-xl animate-sheet-up",
+          "sm:rounded-xl sm:animate-scale-in",
           SIZES[size]
         )}
       >
-        <header className="flex items-start justify-between gap-4 border-b border-divider p-5">
+        <header className="flex items-start justify-between gap-4 border-b border-divider p-6">
           <div className="min-w-0">
             <h2 id={titleId} className="text-h3 text-ink">
               {title}
             </h2>
             {description && (
-              <p id={descId} className="mt-1 text-small text-muted">
+              <p id={descId} className="mt-1.5 text-small text-muted">
                 {description}
               </p>
             )}
@@ -122,7 +122,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="-me-2 -mt-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted transition-colors duration-quick hover:bg-ink/[0.05] hover:text-ink"
+            className="-me-2 -mt-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-faint transition-colors duration-quick hover:bg-ink/[0.05] hover:text-ink"
           >
             <svg viewBox="0 0 20 20" className="h-5 w-5" aria-hidden="true">
               <path
@@ -135,9 +135,9 @@ export function Modal({
           </button>
         </header>
 
-        {children && <div className="p-5">{children}</div>}
+        {children && <div className="p-6">{children}</div>}
         {footer && (
-          <footer className="flex flex-col-reverse gap-2 border-t border-divider p-5 sm:flex-row sm:justify-end">
+          <footer className="flex flex-col-reverse gap-3 border-t border-divider p-6 sm:flex-row sm:justify-end">
             {footer}
           </footer>
         )}

@@ -3,135 +3,545 @@
 @tailwind utilities;
 
 /* ==========================================================================
+   MADAR — مدار
+   Typeface: Thmanyah Serif (خط ثمانية), in two optical cuts.
+
+   The `@font-face` declarations are NOT here — they live in
+   `public/fonts/thmanyah.css` and are linked from index.html.
+
+   Why: CRA points webpack's `resolve.roots` at the public directory, so a
+   `url(/fonts/…)` inside a bundled stylesheet is resolved at build time and
+   breaks `npm run build` whenever a font file is absent. Declaring the faces
+   in an unbundled stylesheet keeps the fonts a genuine drop-in: present, they
+   load; absent, the browser falls through to the stack defined in
+   `--font-brand` / `--font-display` below.
+   ========================================================================== */
+
+/* ==========================================================================
    Design tokens
-   Values are space-separated RGB channels so Tailwind alpha modifiers work
-   (e.g. `bg-surface/60`). Light is the default; `.dark` on <html> swaps them.
-   Every text pair below is contrast-verified — see the palette notes in the
-   project README before changing any of them.
+
+   Colours are space-separated RGB channels so Tailwind's `<alpha-value>`
+   modifiers keep working (`bg-surface/60`). Light is the default; `.dark` on
+   <html> swaps the values underneath, so no component ever branches on theme.
+
+   The palette is cream / parchment / beige / espresso. Every text pair below
+   is contrast-checked against the surface it is used on — the ratio is noted.
    ========================================================================== */
 @layer base {
   :root {
-    --canvas: 251 249 244;
-    --surface: 255 255 255;
-    --raised: 245 242 234;
+    /* --- warm paper surfaces --- */
+    --canvas: 243 238 229;      /* #F3EEE5  the page itself */
+    --surface: 250 248 243;     /* #FAF8F3  raised paper */
+    --raised: 231 217 199;      /* #E7D9C7  warm tint block */
+    --deep: 214 194 170;        /* #D6C2AA  deepest warm fill */
 
-    --ink: 16 32 64; /* 15.32:1 on canvas — AAA */
-    --muted: 85 98 125; /* 5.82:1 — AA */
-    --faint: 119 128 154; /* low emphasis, large text / icons only */
+    /* --- ink --- */
+    --ink: 43 33 27;            /* #2B211B  13.6:1 on canvas — AAA */
+    --muted: 74 56 44;          /* #4A382C   9.6:1 on canvas — AAA */
+    --faint: 111 99 87;         /* #6F6357   5.2:1 on canvas — AA  */
 
-    --accent: 138 106 24; /* 4.80:1 — AA */
-    --accent-strong: 110 84 18;
-    --on-accent: 255 255 255;
+    /* --- accent ---
+       Nudged off pure brown toward red so it sits between the cream canvas
+       and the cherry block rather than belonging to neither. */
+    --accent: 107 68 54;        /* #6B4436   7.3:1 on canvas — AAA */
+    --accent-strong: 79 46 34;  /* #4F2E22 */
+    --on-accent: 250 248 243;   /* 8.0:1 on accent — AAA */
 
-    --divider: 237 231 218; /* decorative rules */
-    --control: 146 136 121; /* 3.32:1 — meets non-text minimum */
+    /* --- lines and controls --- */
+    --divider: 216 206 193;     /* #D8CEC1  hairline rules */
+    --control: 185 171 154;     /* #B9AB9A  3.1:1 — non-text minimum */
 
-    --success: 47 107 79;
-    --warning: 138 106 24;
-    --danger: 163 43 38;
-    --info: 42 76 134;
-    --on-status: 255 255 255;
+    /* --- the dark editorial block, used on light pages ---
+       Espresso brown, not maroon. An earlier pass pushed this surface itself
+       toward cherry and it stopped belonging to the page — a full-bleed
+       crimson band reads as a different brand from the cream and brown
+       around it. Cherry is far more effective as the *accent* it is in the
+       logo: a brown spiral with a single cherry ring around it. So the
+       surface went back to brown with only a faint red lean at the foot of
+       the gradient, and `--cherry` below carries the colour instead. */
+    --espresso: 48 28 26;       /* #301C1A  deep brown, faint red lean — 13.9:1 */
+    --espresso-warm: 58 42 34;  /* #3A2A22  warm brown                 — 11.9:1 */
+    --on-espresso: 243 238 229;
 
-    --scrim: 16 32 64;
+    /* --- cherry ---
+       Lifted from the ring in the Madar mark. An accent only: rules, the
+       logo ring, one orbital path. Never a full surface. */
+    --cherry: 166 62 85;        /* #A63E55  5.3:1 on canvas — AA */
+    --cherry-soft: 190 96 116;
+
+    /* --- status, warmed to sit inside the palette --- */
+    --success: 63 107 74;       /* 5.5:1 */
+    --warning: 138 99 24;       /* 5.0:1 */
+    --danger: 154 59 46;        /* 6.0:1 */
+    --info: 92 78 62;           /* warm neutral, not blue */
+    --on-status: 250 248 243;
+
+    --scrim: 38 24 21;
     color-scheme: light;
   }
 
   .dark {
-    --canvas: 10 20 40;
-    --surface: 16 31 58;
-    --raised: 23 41 74;
+    /* The same cherry undertone, applied far more sparingly: at these values
+       extra red reads as dried blood very quickly, so it is a hint only. */
+    --canvas: 25 19 17;         /* #191311  espresso, never pure black */
+    --surface: 34 26 23;        /* #221A17 */
+    --raised: 45 35 31;         /* #2D231F */
+    --deep: 58 45 39;           /* #3A2D27 */
 
-    --ink: 237 232 220; /* 15.02:1 on canvas — AAA */
-    --muted: 154 165 188; /* 7.42:1 — AAA */
-    --faint: 111 124 150;
+    --ink: 240 233 222;         /* #F0E9DE  15.0:1 on canvas — AAA */
+    --muted: 191 178 163;       /* #BFB2A3   8.7:1 — AAA */
+    --faint: 150 137 122;       /*           5.2:1 — AA  */
 
-    --accent: 224 192 112; /* 10.44:1 — AAA */
-    --accent-strong: 239 212 143;
-    --on-accent: 10 20 40;
+    --accent: 210 173 144;      /* #D2AD90   8.7:1 — AAA */
+    --accent-strong: 228 200 176;
+    --on-accent: 27 20 22;
 
-    --divider: 30 44 73;
-    --control: 90 110 150; /* 3.21:1 */
+    --divider: 57 45 39;
+    --control: 97 80 70;
 
-    --success: 111 211 155;
-    --warning: 224 192 112;
-    --danger: 240 138 130;
-    --info: 143 182 238;
-    --on-status: 10 20 40;
+    /* The block inverts with the theme so it stays a *contrast* block: on a
+       dark page the statement surface is the pale one. The pair keeps a
+       rosy-to-warm relationship so the gradient still reads as a transition
+       rather than a flat fill. */
+    --espresso: 240 231 224;    /* 14.9:1 vs on-espresso */
+    --espresso-warm: 244 238 228;
+    --on-espresso: 27 20 22;
 
-    --scrim: 4 8 18;
+    /* Brightened so the ring still reads as cherry against dark surfaces. */
+    --cherry: 201 100 124;      /* #C9647C */
+    --cherry-soft: 214 133 152;
+
+    --success: 126 187 141;
+    --warning: 216 178 106;
+    --danger: 231 145 132;
+    --info: 194 178 158;
+    --on-status: 26 21 18;
+
+    --scrim: 12 9 7;
     color-scheme: dark;
+  }
+
+  /* ------------------------------------------------------------------
+     Typography
+
+     One family carries the whole identity. Hierarchy comes from size and
+     weight, never from swapping typefaces. Latin is confined to the small
+     tracked labels and numerals where it genuinely reads better.
+     ------------------------------------------------------------------ */
+  :root {
+    --font-brand: "Thmanyah Text", "Noto Naskh Arabic", "Amiri", Georgia,
+      "Times New Roman", serif;
+    --font-display: "Thmanyah Display", "Thmanyah Text", "Noto Naskh Arabic",
+      "Amiri", Georgia, "Times New Roman", serif;
+    /* UI chrome — buttons, nav, form controls, badges. A sans reads cleaner
+       than a serif at small interface sizes, which is why the foundry ships
+       Thmanyah as a third, dedicated cut rather than expecting Text to cover
+       both reading copy and UI labels. */
+    --font-ui: "Thmanyah Sans", "IBM Plex Sans Arabic", "Noto Kufi Arabic",
+      system-ui, -apple-system, sans-serif;
+    --font-latin: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+    /* Motion — one easing family, three speeds. */
+    --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --dur-quick: 180ms;
+    --dur-settle: 320ms;
+    --dur-enter: 620ms;
+
+    /* Layout */
+    --gutter: 1.25rem;
+    --shell: 78rem;
+    /* The hero and other full-bleed compositions run wider than the reading
+       shell. Body copy is still capped by `max-w-measure`, so widening this
+       buys composition room without ever lengthening a line of text. */
+    --shell-wide: 78rem;
+  }
+
+  @media (min-width: 768px) {
+    :root { --gutter: 2.5rem; }
+  }
+  @media (min-width: 1280px) {
+    :root {
+      --gutter: 4rem;
+      --shell-wide: 88rem;
+    }
+  }
+  @media (min-width: 1600px) {
+    :root {
+      --gutter: 5rem;
+      --shell-wide: 96rem;
+    }
   }
 
   html {
     -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-canvas text-ink font-sans text-body antialiased;
+    background-color: rgb(var(--canvas));
+    color: rgb(var(--ink));
+    font-family: var(--font-brand);
+    font-size: 1.0625rem;      /* 17px */
+    line-height: 1.85;          /* Arabic needs the room */
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
+
+  /* Paper grain. One fixed 180px tile, painted once and composited by the
+     GPU — it never repaints on scroll. Subtle enough to read as texture
+     rather than noise. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.055'/%3E%3C/svg%3E");
+  }
+  .dark body::before { opacity: 0.22; }
 
   /* Arabic joins break under letter-spacing — never track Arabic text. */
-  :lang(ar) {
-    letter-spacing: 0;
-  }
+  :lang(ar) { letter-spacing: 0; }
 
-  h1,
-  h2,
-  h3,
-  h4 {
-    @apply font-display;
+  h1, h2, h3, h4 {
     text-wrap: balance;
+    line-height: 1.25;
+    font-weight: 500;
   }
+  /* h1/h2 are large enough for the display cut; h3/h4 stay on the text cut,
+     where the sturdier joins hold up at 19–22px. */
+  h1, h2 {
+    font-family: var(--font-display);
+    letter-spacing: -0.005em;
+  }
+  h3, h4 { font-family: var(--font-brand); }
 
-  /* One global focus treatment. Individual components must never reintroduce
-     `outline-none` without an equivalent — this is the replacement for the 26
-     stripped outlines the audit found. */
+  /* Interface chrome gets the Sans cut: every nav link and page action in
+     this app is a native `<button>`, and every form field is a native
+     `input`/`select`/`textarea` — so this one rule reaches the navbar, the
+     mobile menu, every `Button`/`IconButton`/`TextLink`, and every `Field` in
+     src/ui/Field.tsx without each of those components having to opt in
+     individually. Reading copy (`p`, article text) is untouched and stays on
+     the Text serif. */
+  button,
+  input,
+  select,
+  textarea {
+    font-family: var(--font-ui);
+  }
+  h1 { line-height: 1.14; }
+
+  p { text-wrap: pretty; }
+
+  /* One global focus treatment. Components must never reintroduce
+     `outline-none` without an equivalent. */
   :focus-visible {
     outline: 2px solid rgb(var(--accent));
-    outline-offset: 2px;
+    outline-offset: 3px;
     border-radius: 2px;
   }
 
   ::selection {
-    background: rgb(var(--accent) / 0.25);
+    background: rgb(var(--accent) / 0.22);
+    color: rgb(var(--ink));
   }
 
   /* Long tokens (usernames, URLs) must reflow rather than force overflow. */
-  .break-anywhere {
-    overflow-wrap: anywhere;
-  }
+  .break-anywhere { overflow-wrap: anywhere; }
+
+  /* Keep the app above the grain layer. */
+  #root { position: relative; z-index: 1; }
 }
 
+/* ==========================================================================
+   Components
+   ========================================================================== */
 @layer components {
-  /* The signature element: a thin arc drawn from the club's "orbit" mark.
-     Used for active nav, section markers and avatar rings — one motif,
-     reused, instead of decorative noise. */
-  .orbit-rule {
-    @apply relative;
+  .shell {
+    width: 100%;
+    max-width: var(--shell);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
   }
-  .orbit-rule::after {
+
+  /* Wider variant for compositional sections (the hero, the dark figures
+     band) where the point is the arrangement, not the reading measure. */
+  .shell-wide {
+    width: 100%;
+    max-width: var(--shell-wide);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* Editorial eyebrow: tracked Latin-scale label with a leading hairline.
+     The rule sits on the inline-start edge, so it flips with direction. */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgb(var(--accent));
+  }
+  .eyebrow::before {
     content: "";
-    @apply absolute inset-x-0 -bottom-2 h-px bg-gradient-to-r from-transparent via-accent to-transparent;
+    width: 2rem;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.55;
+  }
+  /* Arabic eyebrows keep the rule but drop the tracking and casing. */
+  .eyebrow:lang(ar) {
+    letter-spacing: 0;
+    text-transform: none;
+    font-size: 0.8125rem;
+  }
+
+  /* The espresso block.
+     Brown at the top settling into cherry at the foot — the transition the
+     palette is named for, done once here so every dark block on the site
+     shares it instead of each one hard-coding a fill.
+
+     Vertical on purpose: a diagonal would need mirroring for RTL, and a
+     horizontal one would run the "wrong" way in Arabic. The endpoints are
+     close enough in value that this reads as a single rich surface with
+     depth in it, not as a gradient effect.
+
+     `background-color` is set first so the flat cherry is what shows if the
+     gradient is ever unsupported or overridden. */
+  .surface-espresso {
+    background-color: rgb(var(--espresso));
+    background-image: linear-gradient(
+      180deg,
+      rgb(var(--espresso-warm)) 0%,
+      rgb(var(--espresso)) 78%
+    );
+  }
+
+  /* Scroll cue: a hairline that travels down its own track and restarts.
+     Reads as an invitation rather than a spinner because it is a single
+     stroke on a fixed rail, not a rotating shape. */
+  .scroll-cue {
+    position: relative;
+    display: block;
+    width: 1px;
+    height: 2.25rem;
+    overflow: hidden;
+    background: rgb(var(--divider));
+  }
+  .scroll-cue::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 45%;
+    background: rgb(var(--accent));
+    animation: madar-scroll-cue 2.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
   }
 
   .skeleton {
-    @apply relative overflow-hidden rounded-md bg-raised;
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    background: rgb(var(--raised));
   }
   .skeleton::after {
     content: "";
-    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-ink/[0.06] to-transparent;
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    animation: shimmer 1.6s infinite;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(var(--ink) / 0.05),
+      transparent
+    );
   }
+
+  /* Animated underline for editorial links. Grows from the inline-start
+     edge, so it runs right-to-left in Arabic without extra rules. */
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0% 100%;
+    background-repeat: no-repeat;
+    transition: background-size var(--dur-settle) var(--ease-standard);
+  }
+  [dir="rtl"] .link-underline { background-position: 100% 100%; }
+  .link-underline:hover,
+  .link-underline:focus-visible { background-size: 100% 1px; }
 }
 
+/* ==========================================================================
+   Motion system
+
+   Reveals are driven by a `data-reveal` attribute toggled by an
+   IntersectionObserver (see src/ui/Reveal.tsx). The animation itself is pure
+   CSS — no JS runs per frame, and only `opacity`/`transform`/`clip-path` are
+   touched, so everything stays on the compositor.
+   ========================================================================== */
 @layer utilities {
-  /* Tabular figures keep leaderboard ranks and dates from jittering. */
   .nums {
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
+  /* Latin-only contexts: usernames, counts, dates, tracked labels. */
+  .latin { font-family: var(--font-latin); }
 }
 
-/* Honour the OS motion preference globally rather than per-component. */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+@keyframes madar-fade-up {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes madar-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes madar-scale-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes madar-sheet-up {
+  from { transform: translate3d(0, 100%, 0); }
+  to   { transform: none; }
+}
+@keyframes madar-scroll-cue {
+  0%   { transform: translateY(-100%); }
+  55%  { transform: translateY(220%); }
+  100% { transform: translateY(220%); }
+}
+@keyframes madar-orbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes madar-draw {
+  from { stroke-dashoffset: 1; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* --- Scroll reveal ------------------------------------------------------ */
+[data-reveal] {
+  opacity: 0;
+  transition:
+    opacity var(--dur-enter) var(--ease-entrance),
+    transform var(--dur-enter) var(--ease-entrance),
+    clip-path var(--dur-enter) var(--ease-entrance);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+[data-reveal="up"]    { transform: translate3d(0, 26px, 0); }
+[data-reveal="left"]  { transform: translate3d(-26px, 0, 0); }
+[data-reveal="right"] { transform: translate3d(26px, 0, 0); }
+[data-reveal="scale"] { transform: scale(0.96); }
+
+/* A longer, softer rise for large editorial blocks — travels further and
+   settles slower than `up`, so a headline does not enter at the same rate as
+   a list item. */
+[data-reveal="rise"] {
+  transform: translate3d(0, 54px, 0);
+  transition-duration: 900ms;
+}
+
+/* Lifts and settles: used for figures and cards that should feel placed
+   rather than slid in. */
+[data-reveal="settle"] {
+  transform: translate3d(0, 30px, 0) scale(0.975);
+  transition-duration: 820ms;
+}
+
+/* Masked image reveal — the frame stays put while the picture uncovers. */
+[data-reveal="clip"] {
+  opacity: 1;
+  clip-path: inset(0 0 100% 0);
+}
+[data-reveal="clip-up"] {
+  opacity: 1;
+  clip-path: inset(100% 0 0 0);
+}
+
+/* Horizontal wipe for headlines. Only the inline axis is clipped — the
+   vertical insets stay at 0 so Arabic descenders and diacritics are never
+   sliced. Runs from the inline-start edge, so it wipes right-to-left in
+   Arabic and left-to-right in English without a second keyframe. */
+[data-reveal="wipe"] {
+  opacity: 1;
+  clip-path: inset(0 100% 0 0);
+  transition-duration: 900ms;
+}
+[dir="rtl"] [data-reveal="wipe"] {
+  clip-path: inset(0 0 0 100%);
+}
+
+[data-reveal][data-visible="true"] {
+  opacity: 1;
+  transform: none;
+  clip-path: inset(0 0 0 0);
+}
+
+/* Once a reveal has played, stop advertising it to the compositor. */
+[data-reveal][data-visible="true"] { will-change: auto; }
+
+/* --- Page entrance ------------------------------------------------------
+   Applied on mount rather than on scroll: the hero is already in view, so it
+   must not wait for an intersection. */
+.enter {
+  animation: madar-fade-up var(--dur-enter) var(--ease-entrance) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+
+/* --- The orbit motif ----------------------------------------------------
+   Transform-only rotation, so everything stays on the compositor.
+
+   The three drift rates are deliberately not multiples of one another: the
+   bodies never resynchronise into the arrangement they started from, which
+   is what keeps the movement reading as slow drift rather than as a loading
+   spinner. All are far too slow to draw attention on their own. */
+.orbit-spin {
+  animation: madar-orbit 90s linear infinite;
+  transform-origin: 50% 50%;
+}
+.orbit-spin-reverse {
+  animation: madar-orbit 140s linear infinite reverse;
+  transform-origin: 50% 50%;
+}
+/* The mark's spiral core, where it is given room to turn (the about page).
+   Far slower than anything else on the site so it never pulls focus. */
+.madar-spin {
+  animation: madar-orbit 120s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+.orbit-drift-slow    { animation: madar-orbit 150s linear infinite; }
+.orbit-drift-reverse { animation: madar-orbit 104s linear infinite reverse; }
+.orbit-drift-fast    { animation: madar-orbit 67s  linear infinite; }
+
+/* The system as a whole answers to scroll. The custom properties are written
+   by useOrbitScroll (src/ui/Orbit.tsx) and default to zero, so the element is
+   correct before any script runs and stays correct if none ever does. */
+.orbit-system {
+  transform: translate3d(0, var(--orbit-shift, 0px), 0)
+             rotate(var(--orbit-rot, 0deg));
+  will-change: transform;
+}
+
+/* ==========================================================================
+   Reduced motion — honoured globally rather than per component.
+   Reveals must still end *visible*, so they are forced to their final state
+   rather than merely having their duration zeroed.
+   ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
   *,
   *::before,
   *::after {
@@ -140,4 +550,23 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+
+  .scroll-cue::after { animation: none !important; }
+
+  .madar-spin,
+  .orbit-spin,
+  .orbit-spin-reverse,
+  .orbit-drift-slow,
+  .orbit-drift-reverse,
+  .orbit-drift-fast { animation: none !important; }
+
+  /* The scroll coupling is never attached under reduced motion, but pin the
+     transform too so a stale custom property can never offset the system. */
+  .orbit-system { transform: none !important; }
 }

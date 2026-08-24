@@ -1,23 +1,39 @@
 <!DOCTYPE html>
-<!-- lang/dir are the Arabic-first defaults; App.tsx keeps them in sync with the
-     language switcher so screen readers always get the right language. -->
+<!-- lang/dir are the Arabic-first defaults; the i18n provider keeps them in
+     sync with the language switcher so screen readers always get the right
+     language and the logical-property engine gets the right direction. -->
 <html lang="ar" dir="rtl">
 
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="theme-color" content="#FBF9F4" media="(prefers-color-scheme: light)">
-	<meta name="theme-color" content="#0A1428" media="(prefers-color-scheme: dark)">
-	<meta name="description" content="نادي مدار — بيئة إبداعية وتفاعلية لصقل مهارات الطلاب وتنمية مواهبهم. Madar Club, a student creative community in Taif.">
+	<meta name="theme-color" content="#F3EEE5" media="(prefers-color-scheme: light)">
+	<meta name="theme-color" content="#1A1512" media="(prefers-color-scheme: dark)">
+	<meta name="description"
+		content="نادي مدار — بيئة إبداعية وتفاعلية لصقل مهارات الطلاب وتنمية مواهبهم. Madar Club, a student creative community in Taif.">
 
-	<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23102040'/%3E%3Ccircle cx='16' cy='16' r='4.5' fill='%23E0C070'/%3E%3Cellipse cx='16' cy='16' rx='11' ry='4.5' fill='none' stroke='%23E0C070' stroke-width='1.6' transform='rotate(-24 16 16)'/%3E%3C/svg%3E">
+	<link rel="icon"
+		href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232B211B'/%3E%3Ccircle cx='16' cy='16' r='3.6' fill='%23E7D9C7'/%3E%3Cellipse cx='16' cy='16' rx='11' ry='4.6' fill='none' stroke='%23D6C2AA' stroke-width='1.5' transform='rotate(-24 16 16)'/%3E%3C/svg%3E">
 
+	<!-- The brand face is self-hosted from /fonts (see public/fonts/README.md).
+	     Preloading the two weights the first screen actually uses keeps the
+	     swap off the critical path; the rest load on demand. `crossorigin` is
+	     required on font preloads even for same-origin requests. -->
+	<link rel="preload" href="%PUBLIC_URL%/fonts/thmanyahseriftext-Regular.woff2" as="font" type="font/woff2"
+		crossorigin>
+	<link rel="preload" href="%PUBLIC_URL%/fonts/thmanyahserifdisplay-Medium.woff2" as="font" type="font/woff2"
+		crossorigin>
+	<link rel="stylesheet" href="%PUBLIC_URL%/fonts/thmanyah.css">
+
+	<!-- Fallback stack while Thmanyah is unavailable, plus the Latin companion
+	     used for tracked labels and numerals. Noto Naskh Arabic is the interim
+	     Arabic serif and can be dropped from this URL once Thmanyah ships. -->
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link rel="stylesheet"
-		href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Noto+Kufi+Arabic:wght@400;600;800&display=swap">
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap">
 
-	<title>نادي مـدار</title>
+	<title>نادي مـدار — Madar</title>
 </head>
 
 <body>

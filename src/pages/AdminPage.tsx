@@ -1,16 +1,21 @@
 import React from "react";
-import { Plus, Trash2, Users, Eye, Ban } from "lucide-react";
+import { Plus, Trash2, Users, Ban } from "lucide-react";
 import { useI18n } from "../lib/i18nContext";
 import { AVAILABLE_BADGES } from "../lib/i18n";
-import { PageHeader } from "../ui/PageHeader";
+import { cx } from "../lib/cx";
+import { PageHeader } from "../ui/Section";
 import { Button, IconButton } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { SelectField, TextArea, TextField } from "../ui/Field";
 import { EmptyState } from "../ui/States";
-import { cx } from "../lib/cx";
+import { Reveal } from "../ui/Reveal";
 
 type Tab = "members" | "news" | "points" | "events";
-const TABS: { id: Tab; labelKey: "admin_members" | "admin_news" | "admin_points" | "admin_events" }[] = [
+
+const TABS: {
+  id: Tab;
+  labelKey: "admin_members" | "admin_news" | "admin_points" | "admin_events";
+}[] = [
   { id: "members", labelKey: "admin_members" },
   { id: "news", labelKey: "admin_news" },
   { id: "points", labelKey: "admin_points" },
@@ -52,6 +57,14 @@ export interface AdminPageProps {
   pending: boolean;
 }
 
+/**
+ * Admin.
+ *
+ * Same tokens, type and controls as the public site — only the density
+ * changes. Each tab is a two-column working layout: the composer stays put on
+ * the inline-start side while the existing records list beside it, so
+ * publishing does not mean scrolling past everything already published.
+ */
 export function AdminPage(props: AdminPageProps) {
   const { t } = useI18n();
   const { tab, onTabChange } = props;
@@ -60,7 +73,11 @@ export function AdminPage(props: AdminPageProps) {
     <div>
       <PageHeader eyebrow={t("madar_club")} title={t("admin_panel")} />
 
-      <div role="tablist" aria-label={t("admin_panel")} className="mb-8 flex flex-wrap gap-1 border-b border-divider">
+      <div
+        role="tablist"
+        aria-label={t("admin_panel")}
+        className="mt-10 flex flex-wrap gap-x-8 gap-y-2 border-b border-divider"
+      >
         {TABS.map(({ id, labelKey }) => {
           const active = tab === id;
           return (
@@ -72,17 +89,18 @@ export function AdminPage(props: AdminPageProps) {
               id={`admin-tab-${id}`}
               onClick={() => onTabChange(id)}
               className={cx(
-                "relative min-h-[44px] px-4 text-small font-medium transition-colors duration-quick",
-                active ? "text-ink" : "text-muted hover:text-ink"
+                "relative min-h-[44px] pb-3 text-small transition-colors duration-quick",
+                active ? "font-medium text-ink" : "text-faint hover:text-ink"
               )}
             >
               {t(labelKey)}
-              {active && (
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-accent"
-                />
-              )}
+              <span
+                aria-hidden="true"
+                className={cx(
+                  "absolute inset-x-0 -bottom-px h-0.5 bg-accent transition-transform duration-settle ease-standard",
+                  active ? "scale-x-100" : "scale-x-0"
+                )}
+              />
             </button>
           );
         })}
@@ -92,6 +110,7 @@ export function AdminPage(props: AdminPageProps) {
         role="tabpanel"
         id={`admin-panel-${tab}`}
         aria-labelledby={`admin-tab-${tab}`}
+        className="mt-12"
       >
         {tab === "members" && <MembersTab {...props} />}
         {tab === "news" && <NewsTab {...props} />}
@@ -99,6 +118,30 @@ export function AdminPage(props: AdminPageProps) {
         {tab === "events" && <EventsTab {...props} />}
       </div>
     </div>
+  );
+}
+
+/** Shared two-column frame: sticky composer beside a scrolling record list. */
+function Workbench({
+  form,
+  children,
+}: {
+  form: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="grid gap-14 lg:grid-cols-[22rem_1fr] lg:gap-16">
+      <div className="lg:sticky lg:top-28 lg:self-start">{form}</div>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+function RecordCount({ label, value }: { label: string; value: number }) {
+  return (
+    <p className="mb-5 text-micro text-faint">
+      <span className="nums latin font-medium text-ink">{value}</span> {label}
+    </p>
   );
 }
 
@@ -115,85 +158,87 @@ function MembersTab({
   if (members.length === 0) return <EmptyState title={t("no_members_yet")} />;
 
   return (
-    <ul className="space-y-3">
-      {members.map((member) => (
-        <li
-          key={member.id}
-          className="rounded-lg border border-divider bg-surface p-4"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-body font-medium text-ink">{member.fullName}</p>
-              <p className="text-small text-muted" dir="ltr">
-                @{member.username}
-              </p>
+    <>
+      <RecordCount label={t("members_count")} value={members.length} />
+      <ul className="divide-y divide-divider border-y border-divider">
+        {members.map((member) => (
+          <li key={member.id} className="py-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-body font-medium text-ink">{member.fullName}</p>
+                <p className="latin text-small text-faint" dir="ltr">
+                  @{member.username}
+                </p>
+              </div>
+              {member.role === "admin" ? (
+                <Badge tone="accent">{t("admin_panel")}</Badge>
+              ) : (
+                <IconButton
+                  label={`${t("delete_btn")}: ${member.fullName}`}
+                  variant="ghost"
+                  onClick={() => onDeleteUser(member.username)}
+                  className="text-danger hover:bg-danger/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </IconButton>
+              )}
             </div>
-            {member.role !== "admin" && (
-              <IconButton
-                label={t("delete_btn")}
-                variant="ghost"
-                onClick={() => onDeleteUser(member.username)}
-                className="text-danger hover:bg-danger/10"
-              >
-                <Trash2 className="h-4.5 w-4.5" />
-              </IconButton>
-            )}
-          </div>
 
-          {member.badges?.length > 0 && (
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {member.badges.map((badge: string) => (
-                <li key={badge}>
-                  <span className="inline-flex items-center gap-1.5 rounded-sm border border-accent/35 bg-accent/10 px-2 py-0.5 text-micro font-medium text-accent">
-                    {badge}
-                    <button
-                      type="button"
-                      onClick={() => onRemoveBadge(member.username, badge)}
-                      aria-label={`${t("delete_btn")}: ${badge}`}
-                      className="rounded-sm p-0.5 hover:bg-accent/20"
-                    >
-                      <svg viewBox="0 0 12 12" className="h-3 w-3" aria-hidden="true">
-                        <path
-                          d="M3 3l6 6M9 3l-6 6"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </button>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div className="mt-4 flex flex-col gap-2 border-t border-divider pt-3 sm:flex-row sm:items-end">
-            <div className="flex-1">
-              <SelectField
-                label={t("assign_badge")}
-                value={badgeSelect[member.username] || ""}
-                onChange={(e) => onBadgeSelect(member.username, e.target.value)}
-              >
-                <option value="">—</option>
-                {AVAILABLE_BADGES.map((badge) => (
-                  <option key={badge} value={badge}>
-                    {badge}
-                  </option>
+            {member.badges?.length > 0 && (
+              <ul className="mt-4 flex flex-wrap gap-2">
+                {member.badges.map((badge: string) => (
+                  <li key={badge}>
+                    <span className="inline-flex items-center gap-1.5 rounded-sm border border-accent/30 bg-accent/[0.09] px-2.5 py-1 text-micro font-medium leading-none text-accent">
+                      {badge}
+                      <button
+                        type="button"
+                        onClick={() => onRemoveBadge(member.username, badge)}
+                        aria-label={`${t("delete_btn")}: ${badge}`}
+                        className="-me-1 rounded-sm p-1 transition-colors duration-quick hover:bg-accent/20"
+                      >
+                        <svg viewBox="0 0 12 12" className="h-2.5 w-2.5" aria-hidden="true">
+                          <path
+                            d="M3 3l6 6M9 3l-6 6"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+                    </span>
+                  </li>
                 ))}
-              </SelectField>
+              </ul>
+            )}
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div className="max-w-sm flex-1">
+                <SelectField
+                  label={t("assign_badge")}
+                  value={badgeSelect[member.username] || ""}
+                  onChange={(e) => onBadgeSelect(member.username, e.target.value)}
+                >
+                  <option value="">—</option>
+                  {AVAILABLE_BADGES.map((badge) => (
+                    <option key={badge} value={badge}>
+                      {badge}
+                    </option>
+                  ))}
+                </SelectField>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={() => onAssignBadge(member.username)}
+                disabled={!badgeSelect[member.username]}
+              >
+                <Plus className="h-4 w-4" />
+                {t("add_btn")}
+              </Button>
             </div>
-            <Button
-              variant="secondary"
-              onClick={() => onAssignBadge(member.username)}
-              disabled={!badgeSelect[member.username]}
-            >
-              <Plus className="h-4 w-4" />
-              {t("add_btn")}
-            </Button>
-          </div>
-        </li>
-      ))}
-    </ul>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -209,68 +254,73 @@ function NewsTab({
   const set = (patch: any) => onNewsFormChange({ ...newsForm, ...patch });
 
   return (
-    <div className="space-y-10">
-      <form onSubmit={onAddNews} className="max-w-lg space-y-4" noValidate>
-        <TextField
-          label={t("news_title_input")}
-          required
-          value={newsForm.title}
-          onChange={(e) => set({ title: e.target.value })}
-        />
-        <TextArea
-          label={t("news_content_input")}
-          required
-          rows={4}
-          value={newsForm.content}
-          onChange={(e) => set({ content: e.target.value })}
-        />
-        <SelectField
-          label={t("news_media_type")}
-          value={newsForm.mediaType}
-          onChange={(e) => set({ mediaType: e.target.value })}
-        >
-          <option value="none">{t("media_none")}</option>
-          <option value="image">{t("media_image")}</option>
-          <option value="video">{t("media_video")}</option>
-        </SelectField>
-        {newsForm.mediaType !== "none" && (
+    <Workbench
+      form={
+        <form onSubmit={onAddNews} className="space-y-5" noValidate>
           <TextField
-            label={t("news_media_url")}
-            type="url"
-            dir="ltr"
-            value={newsForm.mediaUrl}
-            onChange={(e) => set({ mediaUrl: e.target.value })}
+            label={t("news_title_input")}
+            required
+            value={newsForm.title}
+            onChange={(e) => set({ title: e.target.value })}
           />
-        )}
-        <Button type="submit" pending={pending}>
-          <Plus className="h-4 w-4" />
-          {t("add_btn")}
-        </Button>
-      </form>
-
+          <TextArea
+            label={t("news_content_input")}
+            required
+            rows={5}
+            value={newsForm.content}
+            onChange={(e) => set({ content: e.target.value })}
+          />
+          <SelectField
+            label={t("news_media_type")}
+            value={newsForm.mediaType}
+            onChange={(e) => set({ mediaType: e.target.value })}
+          >
+            <option value="none">{t("media_none")}</option>
+            <option value="image">{t("media_image")}</option>
+            <option value="video">{t("media_video")}</option>
+          </SelectField>
+          {newsForm.mediaType !== "none" && (
+            <TextField
+              label={t("news_media_url")}
+              type="url"
+              dir="ltr"
+              value={newsForm.mediaUrl}
+              onChange={(e) => set({ mediaUrl: e.target.value })}
+            />
+          )}
+          <Button type="submit" pending={pending} block>
+            <Plus className="h-4 w-4" />
+            {t("add_btn")}
+          </Button>
+        </form>
+      }
+    >
       {news.length === 0 ? (
         <EmptyState title={t("empty_news")} />
       ) : (
-        <ul className="divide-y divide-divider border-t border-divider">
-          {news.map((item) => (
-            <li key={item.id} className="flex items-start gap-3 py-3.5">
-              <div className="min-w-0 flex-1">
-                <p className="nums text-micro text-faint">{item.date}</p>
-                <p className="truncate text-body text-ink">{item.title}</p>
-              </div>
-              <IconButton
-                label={t("delete_btn")}
-                variant="ghost"
-                onClick={() => onDeleteNews(item.id)}
-                className="text-danger hover:bg-danger/10"
-              >
-                <Trash2 className="h-4.5 w-4.5" />
-              </IconButton>
-            </li>
-          ))}
-        </ul>
+        <>
+          <RecordCount label={t("admin_news")} value={news.length} />
+          <ul className="divide-y divide-divider border-y border-divider">
+            {news.map((item) => (
+              <li key={item.id} className="flex items-start gap-4 py-4">
+                <div className="min-w-0 flex-1">
+                  <p className="nums latin text-micro text-faint">{item.date}</p>
+                  <p className="mt-1 truncate text-body text-ink">{item.title}</p>
+                </div>
+                <IconButton
+                  label={`${t("delete_btn")}: ${item.title}`}
+                  variant="ghost"
+                  onClick={() => onDeleteNews(item.id)}
+                  className="text-danger hover:bg-danger/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </IconButton>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
-    </div>
+    </Workbench>
   );
 }
 
@@ -286,54 +336,59 @@ function PointsTab({
   const set = (patch: any) => onPointsFormChange({ ...pointsForm, ...patch });
 
   return (
-    <div className="space-y-10">
-      <form onSubmit={onAddPoints} className="max-w-lg space-y-4" noValidate>
-        <TextField
-          label={t("fullname")}
-          required
-          value={pointsForm.name}
-          onChange={(e) => set({ name: e.target.value })}
-        />
-        <TextField
-          label={t("admin_points")}
-          type="number"
-          inputMode="numeric"
-          required
-          dir="ltr"
-          value={pointsForm.points}
-          onChange={(e) => set({ points: e.target.value })}
-        />
-        <Button type="submit" pending={pending}>
-          <Plus className="h-4 w-4" />
-          {t("add_btn")}
-        </Button>
-      </form>
-
+    <Workbench
+      form={
+        <form onSubmit={onAddPoints} className="space-y-5" noValidate>
+          <TextField
+            label={t("fullname")}
+            required
+            value={pointsForm.name}
+            onChange={(e) => set({ name: e.target.value })}
+          />
+          <TextField
+            label={t("admin_points")}
+            type="number"
+            inputMode="numeric"
+            required
+            dir="ltr"
+            value={pointsForm.points}
+            onChange={(e) => set({ points: e.target.value })}
+          />
+          <Button type="submit" pending={pending} block>
+            <Plus className="h-4 w-4" />
+            {t("add_btn")}
+          </Button>
+        </form>
+      }
+    >
       {points.length === 0 ? (
         <EmptyState title={t("points_msg")} />
       ) : (
-        <ul className="divide-y divide-divider border-t border-divider">
-          {points.map((row) => (
-            <li key={row.id} className="flex items-center gap-3 py-3.5">
-              <span className="min-w-0 flex-1 truncate text-body text-ink">
-                {row.name}
-              </span>
-              <span className="nums shrink-0 text-body font-medium text-ink">
-                {formatNumber(row.points)}
-              </span>
-              <IconButton
-                label={t("delete_btn")}
-                variant="ghost"
-                onClick={() => onDeletePoints(row.id)}
-                className="text-danger hover:bg-danger/10"
-              >
-                <Trash2 className="h-4.5 w-4.5" />
-              </IconButton>
-            </li>
-          ))}
-        </ul>
+        <>
+          <RecordCount label={t("admin_points")} value={points.length} />
+          <ul className="divide-y divide-divider border-y border-divider">
+            {points.map((row) => (
+              <li key={row.id} className="flex items-center gap-4 py-3.5">
+                <span className="min-w-0 flex-1 truncate text-body text-ink">
+                  {row.name}
+                </span>
+                <span className="nums latin shrink-0 text-body font-medium text-ink">
+                  {formatNumber(row.points)}
+                </span>
+                <IconButton
+                  label={`${t("delete_btn")}: ${row.name}`}
+                  variant="ghost"
+                  onClick={() => onDeletePoints(row.id)}
+                  className="text-danger hover:bg-danger/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </IconButton>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
-    </div>
+    </Workbench>
   );
 }
 
@@ -351,105 +406,110 @@ function EventsTab({
   const set = (patch: any) => onEventFormChange({ ...eventForm, ...patch });
 
   return (
-    <div className="space-y-10">
-      <form onSubmit={onAddEvent} className="max-w-lg space-y-4" noValidate>
-        <TextField
-          label={t("news_title_input")}
-          required
-          value={eventForm.title}
-          onChange={(e) => set({ title: e.target.value })}
-        />
-        <TextArea
-          label={t("news_content_input")}
-          rows={3}
-          value={eventForm.desc}
-          onChange={(e) => set({ desc: e.target.value })}
-        />
-        <TextField
-          label={t("news_media_url")}
-          type="url"
-          dir="ltr"
-          value={eventForm.link}
-          onChange={(e) => set({ link: e.target.value })}
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
+    <Workbench
+      form={
+        <form onSubmit={onAddEvent} className="space-y-5" noValidate>
           <TextField
-            label={t("events_upcoming")}
-            type="date"
+            label={t("news_title_input")}
             required
-            dir="ltr"
-            value={eventForm.startDate}
-            onChange={(e) => set({ startDate: e.target.value })}
+            value={eventForm.title}
+            onChange={(e) => set({ title: e.target.value })}
+          />
+          <TextArea
+            label={t("news_content_input")}
+            rows={4}
+            value={eventForm.desc}
+            onChange={(e) => set({ desc: e.target.value })}
           />
           <TextField
-            label={t("events_past")}
-            type="date"
-            required
+            label={t("news_media_url")}
+            type="url"
             dir="ltr"
-            value={eventForm.endDate}
-            onChange={(e) => set({ endDate: e.target.value })}
+            value={eventForm.link}
+            onChange={(e) => set({ link: e.target.value })}
           />
-        </div>
-        <Button type="submit" pending={pending}>
-          <Plus className="h-4 w-4" />
-          {t("add_btn")}
-        </Button>
-      </form>
-
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField
+              label={t("events_upcoming")}
+              type="date"
+              required
+              dir="ltr"
+              value={eventForm.startDate}
+              onChange={(e) => set({ startDate: e.target.value })}
+            />
+            <TextField
+              label={t("events_past")}
+              type="date"
+              required
+              dir="ltr"
+              value={eventForm.endDate}
+              onChange={(e) => set({ endDate: e.target.value })}
+            />
+          </div>
+          <Button type="submit" pending={pending} block>
+            <Plus className="h-4 w-4" />
+            {t("add_btn")}
+          </Button>
+        </form>
+      }
+    >
       {events.length === 0 ? (
         <EmptyState title={t("empty_events")} />
       ) : (
-        <ul className="space-y-3 border-t border-divider pt-6">
-          {events.map((ev) => (
-            <li
-              key={ev.id}
-              className="rounded-lg border border-divider bg-surface p-4"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-body font-medium text-ink">{ev.title}</p>
-                  <p className="nums text-small text-muted">
-                    {formatDateRange(ev.startDate, ev.endDate)}
-                  </p>
+        <>
+          <RecordCount label={t("admin_events")} value={events.length} />
+          <ul className="divide-y divide-divider border-y border-divider">
+            {events.map((ev) => (
+              <li key={ev.id} className="py-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-body font-medium text-ink">{ev.title}</p>
+                    <p className="nums mt-1 text-small text-faint">
+                      {formatDateRange(ev.startDate, ev.endDate)}
+                    </p>
+                  </div>
+                  {ev.isCanceled && (
+                    <Badge tone="danger">{t("status_canceled")}</Badge>
+                  )}
                 </div>
-                {ev.isCanceled && <Badge tone="danger">{t("status_canceled")}</Badge>}
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2 border-t border-divider pt-3">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => onViewRegistrations(ev)}
-                >
-                  <Users className="h-4 w-4" />
-                  {t("view_registered")}
-                  <span className="nums ms-1 text-muted">
-                    {(ev.registeredUsers || []).length}
-                  </span>
-                </Button>
-                {!ev.isCanceled && (
+
+                <div className="mt-4 flex flex-wrap gap-2">
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => onCancelEvent(ev.id)}
+                    onClick={() => onViewRegistrations(ev)}
                   >
-                    <Ban className="h-4 w-4" />
-                    {t("cancel_btn")}
+                    <Users className="h-4 w-4" />
+                    {t("view_registered")}
+                    <span className="nums latin ms-1 text-faint">
+                      {(ev.registeredUsers || []).length}
+                    </span>
                   </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDeleteEvent(ev.id)}
-                  className="text-danger hover:bg-danger/10"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t("delete_btn")}
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                  {!ev.isCanceled && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => onCancelEvent(ev.id)}
+                    >
+                      <Ban className="h-4 w-4" />
+                      {t("cancel_btn")}
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDeleteEvent(ev.id)}
+                    className="text-danger hover:bg-danger/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {t("delete_btn")}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
-    </div>
+    </Workbench>
   );
 }

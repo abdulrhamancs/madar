@@ -23,9 +23,9 @@ const ToastContext = createContext<(message: string, tone?: ToastTone) => void>(
 export const useToast = () => useContext(ToastContext);
 
 const TONES: Record<ToastTone, string> = {
-  success: "border-success/40 text-success",
-  danger: "border-danger/40 text-danger",
-  info: "border-info/40 text-info",
+  success: "border-success/35 text-success",
+  danger: "border-danger/35 text-danger",
+  info: "border-info/35 text-info",
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -56,7 +56,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={toast.id}
             className={cx(
-              "pointer-events-auto flex max-w-sm items-center gap-2.5 rounded-md border bg-surface px-4 py-3 text-small font-medium shadow-overlay animate-fade-up",
+              "pointer-events-auto flex max-w-sm items-center gap-3 rounded-lg border bg-surface px-4 py-3.5 text-small font-medium shadow-lift animate-fade-up",
               TONES[toast.tone]
             )}
           >

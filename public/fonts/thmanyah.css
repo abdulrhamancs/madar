@@ -1,0 +1,146 @@
+/* ==========================================================================
+   MADAR — Thmanyah (خط ثمانية) face declarations
+
+   Three families, verified genuine by decoding each file's sfnt `name` table
+   (not just trusting the filename) — see the delivery note in README.md:
+     - Thmanyah Serif Display  — large editorial headlines
+     - Thmanyah Serif Text     — body copy, article text, h3/h4
+     - Thmanyah Sans           — UI chrome: buttons, nav, form controls
+
+   This file lives in `public/` and is linked directly from index.html, so
+   webpack never parses it. That is deliberate: CRA sets `resolve.roots` to the
+   public directory, which makes it resolve `url(/fonts/…)` at *build* time and
+   fail the build when a font is absent. Keeping the declarations here means
+   the app builds and runs whether or not the binaries are present — a missing
+   file is just a 404 the browser recovers from by using the fallback stack in
+   src/styles.css.
+   ========================================================================== */
+
+/* --- Thmanyah Serif Text — body, UI, h3/h4 ------------------------------- */
+@font-face {
+  font-family: "Thmanyah Text";
+  src: url("thmanyahseriftext-Light.woff2") format("woff2"),
+       url("thmanyahseriftext-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Text";
+  src: url("thmanyahseriftext-Regular.woff2") format("woff2"),
+       url("thmanyahseriftext-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Text";
+  src: url("thmanyahseriftext-Medium.woff2") format("woff2"),
+       url("thmanyahseriftext-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Text";
+  src: url("thmanyahseriftext-Bold.woff2") format("woff2"),
+       url("thmanyahseriftext-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Text";
+  src: url("thmanyahseriftext-Black.woff2") format("woff2"),
+       url("thmanyahseriftext-Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* --- Thmanyah Serif Display — headlines only -----------------------------
+   The display cut is drawn for large sizes: tighter fit, finer joins. Using it
+   below ~24px would look spindly, which is why the foundry ships two optical
+   sizes. This is one typeface at two sizes, not two typefaces. */
+@font-face {
+  font-family: "Thmanyah Display";
+  src: url("thmanyahserifdisplay-Light.woff2") format("woff2"),
+       url("thmanyahserifdisplay-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Display";
+  src: url("thmanyahserifdisplay-Regular.woff2") format("woff2"),
+       url("thmanyahserifdisplay-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Display";
+  src: url("thmanyahserifdisplay-Medium.woff2") format("woff2"),
+       url("thmanyahserifdisplay-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Display";
+  src: url("thmanyahserifdisplay-Bold.woff2") format("woff2"),
+       url("thmanyahserifdisplay-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Display";
+  src: url("thmanyahserifdisplay-Black.woff2") format("woff2"),
+       url("thmanyahserifdisplay-Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* --- Thmanyah Sans — UI chrome: buttons, nav, form controls -------------- */
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("thmanyahsans-Light.woff2") format("woff2"),
+       url("thmanyahsans-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("thmanyahsans-Regular.woff2") format("woff2"),
+       url("thmanyahsans-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("thmanyahsans-Medium.woff2") format("woff2"),
+       url("thmanyahsans-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("thmanyahsans-Bold.woff2") format("woff2"),
+       url("thmanyahsans-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("thmanyahsans-Black.woff2") format("woff2"),
+       url("thmanyahsans-Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}

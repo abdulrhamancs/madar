@@ -3,6 +3,7 @@ import {
   createT,
   dirFor,
   formatDate,
+  formatDateParts,
   formatDateRange,
   formatNumber,
   type Lang,
@@ -18,6 +19,9 @@ interface I18nValue {
     start: string | null | undefined,
     end: string | null | undefined
   ) => string;
+  formatDateParts: (
+    value: string | null | undefined
+  ) => { day: string; month: string; year: string };
   formatNumber: (value: number) => string;
 }
 
@@ -56,6 +60,7 @@ export function I18nProvider({
       t,
       formatDate: (v) => formatDate(v, lang),
       formatDateRange: (s, e) => formatDateRange(s, e, lang),
+      formatDateParts: (v) => formatDateParts(v, lang),
       formatNumber: (n) => formatNumber(n, lang),
     };
   }, [lang]);

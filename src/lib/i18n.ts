@@ -189,6 +189,31 @@ export const translations = {
     empty_news: "لا توجد أخبار منشورة بعد.",
     empty_events: "لا توجد فعاليات مجدولة بعد.",
     members_count: "عضو",
+    // --- redesign: section labels. Wording only; no new features implied. --
+    nav_label: "التنقل",
+    hero_kicker: "نادي طلابي · الطائف",
+    scroll_hint: "تابع للأسفل",
+    hero_sectors_label: "قطاعات النادي",
+    hero_lead:
+      "مساحة يلتقي فيها الطلاب حول فكرة واحدة، فتصير المهارة عملاً والفكرة أثراً.",
+    what_is_madar: "ما هو مدار؟",
+    read_about: "اقرأ نبذة عنا",
+    sectors_lead:
+      "ثلاثة قطاعات، وتسع لجان، تدور جميعها حول مركز واحد.",
+    committees_count: "لجنة",
+    sectors_count: "قطاعات",
+    featured_event: "الفعالية القادمة",
+    view_all: "عرض الكل",
+    latest_news: "أحدث الأخبار",
+    community_title: "أعضاء مدار",
+    community_lead:
+      "مجلس النادي واللجان — الوجوه التي يقوم عليها العمل.",
+    impact_title: "مدار بالأرقام",
+    join_cta_title: "مدارك يبدأ من هنا",
+    join_cta_body:
+      "أنشئ حسابك، اختر لجانك، وابدأ المشاركة في فعاليات النادي.",
+    explore_events: "تصفح الفعاليات",
+    back_home: "العودة للرئيسية",
   },
   en: {
     login_portal: "Login Portal",
@@ -326,6 +351,29 @@ export const translations = {
     empty_news: "No news published yet.",
     empty_events: "No events scheduled yet.",
     members_count: "members",
+    // --- redesign: section labels. Wording only; no new features implied. --
+    nav_label: "Navigation",
+    hero_kicker: "Student club · Taif",
+    scroll_hint: "Scroll",
+    hero_sectors_label: "Club sectors",
+    hero_lead:
+      "A place where students gather around one idea, and skill turns into work, and an idea into impact.",
+    what_is_madar: "What is Madar?",
+    read_about: "Read about us",
+    sectors_lead: "Three sectors and nine committees, all orbiting one centre.",
+    committees_count: "committees",
+    sectors_count: "sectors",
+    featured_event: "Next event",
+    view_all: "View all",
+    latest_news: "Latest news",
+    community_title: "Madar members",
+    community_lead: "The board and the committees — the people behind the work.",
+    impact_title: "Madar in numbers",
+    join_cta_title: "Your orbit starts here",
+    join_cta_body:
+      "Create your account, pick your committees, and start taking part in club events.",
+    explore_events: "Browse events",
+    back_home: "Back to home",
   },
 } as const;
 
@@ -371,6 +419,32 @@ export function formatDateRange(
   if (!a) return b;
   if (!b || a === b) return a;
   return `${a} – ${b}`;
+}
+
+/**
+ * The same date split into parts, for the editorial date block on event cards
+ * (a large day numeral above a month name). Uses the identical calendar and
+ * numbering-system pinning as `formatDate`, so the two never disagree.
+ */
+export function formatDateParts(
+  value: string | null | undefined,
+  lang: Lang
+): { day: string; month: string; year: string } {
+  if (!value) return { day: "", month: "", year: "" };
+  const [y, m, d] = value.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return { day: "", month: "", year: "" };
+  const date = new Date(y, m - 1, d);
+  const part = (options: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat(lang === "ar" ? "ar" : "en-GB", {
+      ...options,
+      calendar: "gregory",
+      numberingSystem: "latn",
+    }).format(date);
+  return {
+    day: part({ day: "2-digit" }),
+    month: part({ month: "short" }),
+    year: part({ year: "numeric" }),
+  };
 }
 
 export function formatNumber(value: number, lang: Lang): string {

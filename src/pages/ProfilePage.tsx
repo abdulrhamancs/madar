@@ -1,10 +1,11 @@
 import React from "react";
-import { User } from "lucide-react";
 import { useI18n } from "../lib/i18nContext";
-import { PageHeader, SectionHeading } from "../ui/PageHeader";
-import { Badge } from "../ui/Badge";
+import { initialsOf } from "../lib/initials";
+import { PageHeader, SubHeading, Eyebrow } from "../ui/Section";
+import { Badge, Tag } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { TextField } from "../ui/Field";
+import { Reveal } from "../ui/Reveal";
 
 export interface ProfileForm {
   fullName: string;
@@ -16,6 +17,11 @@ export interface ProfileForm {
   twitter: string;
 }
 
+/**
+ * The member's own page: who they are in the club first, the edit form second.
+ * The identity block reuses the same circular crop as the community cards, so
+ * a member sees themselves presented the way others see them.
+ */
 export function ProfilePage({
   user,
   form,
@@ -39,26 +45,24 @@ export function ProfilePage({
     <div>
       <PageHeader eyebrow={t("profile")} title={user.fullName} />
 
-      {/* Identity summary */}
-      <section className="mb-10 flex flex-wrap items-center gap-4">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-accent/40 bg-accent/10">
-          <User className="h-6 w-6 text-accent" aria-hidden="true" />
+      {/* --- identity --- */}
+      <Reveal variant="up" className="mt-14 flex flex-wrap items-center gap-6">
+        <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-accent/35 bg-accent/[0.07]">
+          <span className="text-h2 font-medium text-accent">{initialsOf(user.fullName)}</span>
         </span>
         <div className="min-w-0">
-          <p className="text-body font-medium text-ink">{user.fullName}</p>
-          <p className="text-small text-muted" dir="ltr">
+          <p className="text-h3 text-ink">{user.fullName}</p>
+          <p className="latin mt-1 text-small text-faint" dir="ltr">
             @{user.username}
           </p>
         </div>
-      </section>
+      </Reveal>
 
       {(user.badges?.length > 0 || user.committees?.length > 0) && (
-        <section className="mb-10 space-y-5">
+        <Reveal variant="up" delay={90} className="mt-12 space-y-9">
           {user.badges?.length > 0 && (
             <div>
-              <h2 className="mb-2 text-small font-medium text-muted">
-                {t("my_badges")}
-              </h2>
+              <Eyebrow className="mb-4">{t("my_badges")}</Eyebrow>
               <ul className="flex flex-wrap gap-2">
                 {user.badges.map((badge) => (
                   <li key={badge}>
@@ -70,39 +74,38 @@ export function ProfilePage({
           )}
           {user.committees?.length > 0 && (
             <div>
-              <h2 className="mb-2 text-small font-medium text-muted">
-                {t("team_members")}
-              </h2>
+              <Eyebrow className="mb-4">{t("team_members")}</Eyebrow>
               <ul className="flex flex-wrap gap-2">
                 {user.committees.map((committee) => (
                   <li key={committee}>
-                    <Badge>{committee}</Badge>
+                    <Tag>{committee}</Tag>
                   </li>
                 ))}
               </ul>
             </div>
           )}
-        </section>
+        </Reveal>
       )}
 
-      <section className="border-t border-divider pt-8">
-        <SectionHeading title={t("update_profile")} />
+      {/* --- edit --- */}
+      <Reveal variant="up" delay={120} className="mt-20 border-t border-divider pt-14">
+        <SubHeading title={t("update_profile")} />
 
         {message.text && (
           <div
             role="alert"
             className={
-              "mb-5 rounded-md border p-3.5 text-small font-medium " +
+              "mb-7 rounded-lg border p-4 text-small font-medium " +
               (message.type === "error"
-                ? "border-danger/40 bg-danger/[0.07] text-danger"
-                : "border-success/40 bg-success/[0.07] text-success")
+                ? "border-danger/35 bg-danger/[0.07] text-danger"
+                : "border-success/35 bg-success/[0.07] text-success")
             }
           >
             {message.text}
           </div>
         )}
 
-        <form onSubmit={onSubmit} className="max-w-lg space-y-4" noValidate>
+        <form onSubmit={onSubmit} className="max-w-xl space-y-5" noValidate>
           <TextField
             label={t("fullname")}
             required
@@ -126,22 +129,26 @@ export function ProfilePage({
             value={form.email}
             onChange={(e) => set({ email: e.target.value })}
           />
-          <TextField
-            label={t("linkedin_optional")}
-            type="url"
-            dir="ltr"
-            value={form.linkedin}
-            onChange={(e) => set({ linkedin: e.target.value })}
-          />
-          <TextField
-            label={t("x_optional")}
-            type="url"
-            dir="ltr"
-            value={form.twitter}
-            onChange={(e) => set({ twitter: e.target.value })}
-          />
 
-          <fieldset className="space-y-4 border-t border-divider pt-5">
+          <fieldset className="grid gap-5 sm:grid-cols-2">
+            <legend className="sr-only">{t("social_links")}</legend>
+            <TextField
+              label={t("linkedin_optional")}
+              type="url"
+              dir="ltr"
+              value={form.linkedin}
+              onChange={(e) => set({ linkedin: e.target.value })}
+            />
+            <TextField
+              label={t("x_optional")}
+              type="url"
+              dir="ltr"
+              value={form.twitter}
+              onChange={(e) => set({ twitter: e.target.value })}
+            />
+          </fieldset>
+
+          <fieldset className="space-y-5 border-t border-divider pt-7">
             <legend className="sr-only">{t("new_password")}</legend>
             <TextField
               label={t("old_password")}
@@ -162,11 +169,11 @@ export function ProfilePage({
             />
           </fieldset>
 
-          <Button type="submit" size="lg" pending={pending}>
+          <Button type="submit" size="lg" pending={pending} className="!mt-8">
             {pending ? t("saving") : t("update_profile")}
           </Button>
         </form>
-      </section>
+      </Reveal>
     </div>
   );
 }

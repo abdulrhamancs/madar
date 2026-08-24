@@ -1,9 +1,9 @@
 import React from "react";
-import { Crown, Medal, Award } from "lucide-react";
 import { useI18n } from "../lib/i18nContext";
-import { PageHeader } from "../ui/PageHeader";
-import { EmptyState, ErrorState, Skeleton } from "../ui/States";
 import { cx } from "../lib/cx";
+import { PageHeader } from "../ui/Section";
+import { EmptyState, ErrorState, Skeleton } from "../ui/States";
+import { Reveal, RevealGroup } from "../ui/Reveal";
 
 interface PointRow {
   id: number;
@@ -11,13 +11,14 @@ interface PointRow {
   points: number;
 }
 
-// Medal colours are literal semantics (gold/silver/bronze), not decoration.
-const PODIUM = [
-  { icon: Crown, ring: "border-accent/50 bg-accent/10 text-accent" },
-  { icon: Medal, ring: "border-muted/40 bg-muted/10 text-muted" },
-  { icon: Award, ring: "border-warning/40 bg-warning/10 text-warning" },
-];
-
+/**
+ * Leaderboard.
+ *
+ * Ranking is carried by typographic scale and a hairline share bar, not by
+ * medals, trophies or a podium — the top three simply get more room and a
+ * larger figure. That keeps a competitive table looking like a club record
+ * rather than a game score screen.
+ */
 export function PointsPage({
   points,
   loading,
@@ -30,6 +31,7 @@ export function PointsPage({
   onRetry: () => void;
 }) {
   const { t, formatNumber } = useI18n();
+
   const ranked = [...points].sort((a, b) => b.points - a.points);
   const top = ranked.slice(0, 3);
   const rest = ranked.slice(3);
@@ -40,93 +42,90 @@ export function PointsPage({
       <PageHeader
         eyebrow={t("madar_club")}
         title={t("points_title")}
-        count={loading ? undefined : String(ranked.length)}
       />
 
-      {error ? (
-        <ErrorState
-          title={t("error_generic")}
-          message={t("error_network")}
-          retryLabel={t("retry")}
-          onRetry={onRetry}
-        />
-      ) : loading ? (
-        <div className="space-y-3" aria-busy="true">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-14 w-full" />
-          ))}
-        </div>
-      ) : ranked.length === 0 ? (
-        <EmptyState title={t("points_msg")} />
-      ) : (
-        <>
-          {/* Top three get emphasis through scale and a rank mark, not a
-              cartoon podium — the bar still encodes the real ratio. */}
-          <ol className="mb-8 space-y-3">
-            {top.map((row, index) => {
-              const Icon = PODIUM[index].icon;
-              return (
+      <div className="mt-14">
+        {error ? (
+          <ErrorState
+            title={t("error_generic")}
+            message={t("error_network")}
+            retryLabel={t("retry")}
+            onRetry={onRetry}
+          />
+        ) : loading ? (
+          <div className="space-y-4" aria-busy="true">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        ) : ranked.length === 0 ? (
+          <EmptyState title={t("points_msg")} />
+        ) : (
+          <>
+            <RevealGroup
+              variant="up"
+              step={90}
+              as="ol"
+              className="border-t border-divider"
+            >
+              {top.map((row, index) => (
                 <li
                   key={row.id}
-                  className="rounded-lg border border-divider bg-surface p-4"
+                  className="group border-b border-divider py-8"
                 >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={cx(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border",
-                        PODIUM[index].ring
-                      )}
-                    >
-                      <Icon className="h-5 w-5" aria-hidden="true" />
+                  <div className="flex items-baseline gap-6 sm:gap-10">
+                    <span className="nums latin w-8 shrink-0 text-h3 text-accent">
+                      {index + 1}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-h3 text-ink">
-                        {row.name}
-                      </span>
-                      <span className="nums text-micro text-muted">
-                        #{index + 1}
-                      </span>
+                    <span className="min-w-0 flex-1 truncate font-display text-h2 text-ink">
+                      {row.name}
                     </span>
-                    <span className="nums shrink-0 text-h2 text-ink">
+                    <span className="nums latin shrink-0 font-display text-h2 text-ink">
                       {formatNumber(row.points)}
                     </span>
                   </div>
+                  {/* the bar still encodes the real ratio to the leader */}
                   <div
-                    className="mt-3 h-1 w-full overflow-hidden rounded-full bg-raised"
+                    className="mt-5 h-px w-full bg-divider"
                     role="presentation"
                   >
                     <div
-                      className="h-full rounded-full bg-accent"
-                      style={{ width: `${Math.max(4, (row.points / max) * 100)}%` }}
+                      className="h-px bg-accent transition-[width] duration-[900ms] ease-entrance"
+                      style={{ width: `${Math.max(3, (row.points / max) * 100)}%` }}
                     />
                   </div>
                 </li>
-              );
-            })}
-          </ol>
-
-          {rest.length > 0 && (
-            <ol className="divide-y divide-divider border-y border-divider">
-              {rest.map((row, index) => (
-                <li
-                  key={row.id}
-                  className="flex items-center gap-4 py-3.5"
-                >
-                  <span className="nums w-8 shrink-0 text-small text-faint">
-                    {index + 4}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-body text-ink">
-                    {row.name}
-                  </span>
-                  <span className="nums shrink-0 text-body font-medium text-ink">
-                    {formatNumber(row.points)}
-                  </span>
-                </li>
               ))}
-            </ol>
-          )}
-        </>
-      )}
+            </RevealGroup>
+
+            {rest.length > 0 && (
+              <Reveal variant="up" delay={120}>
+                <ol className="divide-y divide-divider border-b border-divider">
+                  {rest.map((row, index) => (
+                    <li
+                      key={row.id}
+                      className={cx(
+                        "-mx-4 flex items-center gap-6 px-4 py-4 transition-colors duration-settle",
+                        "hover:bg-raised/40"
+                      )}
+                    >
+                      <span className="nums latin w-8 shrink-0 text-small text-faint">
+                        {index + 4}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-body text-ink">
+                        {row.name}
+                      </span>
+                      <span className="nums latin shrink-0 text-body font-medium text-ink">
+                        {formatNumber(row.points)}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </Reveal>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
