@@ -83,7 +83,9 @@ export function DateBlock({
       >
         {month}
       </span>
-      <span className="nums mt-1 text-[0.6875rem] text-faint/80">{year}</span>
+      {/* Full `faint`, not `faint/80`: at 11px this is normal-size text and
+          needs 4.5:1, which the dimmed variant missed in both themes. */}
+      <span className="nums mt-1 text-[0.6875rem] text-faint">{year}</span>
     </div>
   );
 }

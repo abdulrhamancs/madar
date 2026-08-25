@@ -8,6 +8,7 @@ import { PageHeader } from "../ui/Section";
 import { Button, IconButton } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { SelectField, TextArea, TextField } from "../ui/Field";
+import { MediaField } from "../ui/MediaField";
 import { EmptyState } from "../ui/States";
 import { Reveal } from "../ui/Reveal";
 
@@ -306,12 +307,11 @@ function NewsTab({
             <option value="video">{t("media_video")}</option>
           </SelectField>
           {newsForm.mediaType !== "none" && (
-            <TextField
-              label={t("news_media_url")}
-              type="url"
-              dir="ltr"
+            <MediaField
+              mediaType={newsForm.mediaType === "video" ? "video" : "image"}
               value={newsForm.mediaUrl}
-              onChange={(e) => set({ mediaUrl: e.target.value })}
+              onChange={(url) => set({ mediaUrl: url })}
+              disabled={pending}
             />
           )}
           <Button type="submit" pending={pending} block>
@@ -675,10 +675,15 @@ function EventsTab({
             value={eventForm.desc}
             onChange={(e) => set({ desc: e.target.value })}
           />
+          {/* This is the event's details link, not media — it renders as the
+              "event details" anchor on the card. It was previously labelled
+              with the news media-URL string, which described the wrong thing.
+              `events` has no media column at all. */}
           <TextField
-            label={t("news_media_url")}
+            label={t("event_link_label")}
             type="url"
             dir="ltr"
+            placeholder="https://…"
             value={eventForm.link}
             onChange={(e) => set({ link: e.target.value })}
           />

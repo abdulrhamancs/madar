@@ -122,7 +122,10 @@ export function EventsPage({
                 aria-selected={active}
                 onClick={() => onFilterChange(value)}
                 className={cx(
-                  "relative min-h-[40px] text-small transition-colors duration-quick",
+                  // `min-w` as well as `min-h`: a short label ("All" at 19px)
+                  // otherwise produced a target narrower than the 24px WCAG 2.2
+                  // minimum, even though the row was tall enough.
+                  "relative min-h-[40px] min-w-[44px] text-small transition-colors duration-quick",
                   active
                     ? "font-medium text-ink"
                     : "text-faint hover:text-ink"

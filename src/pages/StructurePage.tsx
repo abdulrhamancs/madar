@@ -80,7 +80,9 @@ export function StructurePage({
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span className="mt-4 block text-h4 text-faint">{seat.badge}</span>
-                  <span className="mt-1 block text-micro text-faint/80">
+                  {/* `faint/80` measured 3.4:1 light and 3.9:1 dark at 13px,
+                      under the 4.5:1 AA floor for normal text. */}
+                  <span className="mt-1 block text-micro text-faint">
                     {t("vacant")}
                   </span>
                 </li>
