@@ -15,6 +15,7 @@ interface Member {
   id: string;
   fullName: string;
   username: string;
+  role: string;
   committees: string[];
   badges: string[];
 }
@@ -79,22 +80,34 @@ function Detail({ username, detail }: { username: string; detail: string }) {
 function Bar({
   points,
   max,
-  compact = false,
+  prominent = false,
+  className,
 }: {
   points: number;
   max: number;
-  compact?: boolean;
+  prominent?: boolean;
+  className?: string;
 }) {
   const pct = max > 0 ? (points / max) * 100 : 0;
   return (
     <div
-      className={cx("w-full bg-divider", compact ? "mt-3 h-px" : "mt-5 h-px")}
+      className={cx(
+        // A hairline in divider was technically present and practically
+        // invisible — 1.34:1 against the page. Given real height it reads as
+        // an empty rail at nothing, which is the state the club starts in.
+        "w-full overflow-hidden rounded-full bg-divider",
+        prominent ? "h-2" : "h-1.5",
+        className
+      )}
       role="presentation"
     >
+      {/* No inline-start rule needed: in normal flow the fill begins at the
+          inline start of its track, so it grows leftwards in Arabic and
+          rightwards in English on its own. */}
       <div
         className={cx(
-          "h-px transition-[width] duration-[900ms] ease-entrance",
-          compact ? "bg-accent/60" : "bg-accent"
+          "h-full rounded-full transition-[width] duration-[900ms] ease-entrance",
+          prominent ? "bg-accent" : "bg-accent/70"
         )}
         style={{ width: `${pct}%` }}
       />
@@ -132,13 +145,24 @@ export function PointsPage({
 
   const scoreOf = new Map(points.map((p) => [p.name, p.points]));
 
-  const entries: Entry[] = members.map((m) => ({
-    key: m.id,
-    name: m.fullName,
-    username: m.username || "",
-    detail: (m.badges || [])[0] || (m.committees || [])[0] || "",
-    points: scoreOf.get(m.fullName) ?? 0,
-  }));
+  // Admins run the board rather than compete on it. This is a view filter and
+  // nothing more — it does not touch `profiles.role`, `is_admin()` or any
+  // policy, so an excluded account keeps every one of its privileges and its
+  // place everywhere else on the site, the structure page included.
+  //
+  // It does tie "operates the club" to "does not compete". That holds while
+  // one person runs things; a second admin who *did* compete would quietly
+  // drop off here, and at that point this wants to become its own column
+  // rather than a reading of the role.
+  const entries: Entry[] = members
+    .filter((m) => m.role !== "admin")
+    .map((m) => ({
+      key: m.id,
+      name: m.fullName,
+      username: m.username || "",
+      detail: (m.badges || [])[0] || (m.committees || [])[0] || "",
+      points: scoreOf.get(m.fullName) ?? 0,
+    }));
 
   // A points row whose name matches nobody still belongs on the board. The
   // admin form takes a free-text name, so dropping these would quietly lose
@@ -201,7 +225,13 @@ export function PointsPage({
                   key={row.key}
                   className="group border-b border-divider py-8"
                 >
-                  <div className="flex items-center gap-5 sm:gap-8">
+                  {/* The bar sits between the name and the score rather than
+                      under the row. A name that only sized to its text left
+                      nearly 900px of nothing before the figure, so the two
+                      read as unrelated; the bar now spans that distance and
+                      ties them together. The score stays at the inline end so
+                      the column of figures still reads down the page. */}
+                  <div className="flex items-center gap-4 sm:gap-6">
                     {/* The ring is the site's own motif — the same circle the
                         member cards put initials in — so a podium place is
                         marked without importing a medal. First place takes
@@ -218,18 +248,32 @@ export function PointsPage({
                       </span>
                     </span>
 
-                    <span className="min-w-0 flex-1">
+                    <span className="min-w-0 shrink">
                       <span className="block truncate font-display text-h2 text-ink">
                         {row.name}
                       </span>
                       <Detail username={row.username} detail={row.detail} />
                     </span>
 
-                    <span className="nums latin shrink-0 font-display text-h2 text-ink">
+                    <Bar
+                      points={row.points}
+                      max={max}
+                      prominent
+                      className="hidden flex-1 sm:block"
+                    />
+
+                    <span className="nums latin ms-auto shrink-0 font-display text-h2 text-ink sm:ms-0">
                       {formatNumber(row.points)}
                     </span>
                   </div>
-                  <Bar points={row.points} max={max} />
+                  {/* Too narrow to bridge anything on a phone, so it goes back
+                      under the row there. */}
+                  <Bar
+                    points={row.points}
+                    max={max}
+                    prominent
+                    className="mt-4 sm:hidden"
+                  />
                 </li>
               ))}
             </RevealGroup>
@@ -245,21 +289,34 @@ export function PointsPage({
                         "hover:bg-raised/40"
                       )}
                     >
-                      <div className="flex items-center gap-5 sm:gap-6">
-                        <span className="nums latin w-8 shrink-0 text-small text-faint">
+                      <div className="flex items-center gap-3.5 sm:gap-5">
+                        {/* Was 15px in `faint` at 5:1, held a column's width
+                            from the name it belonged to. Larger, in `muted`,
+                            and closer — still plainly lighter than the podium's
+                            48px ring, so the two tiers stay distinct. */}
+                        <span className="nums latin w-6 shrink-0 text-body text-muted">
                           {formatNumber(index + 4)}
                         </span>
-                        <span className="min-w-0 flex-1">
+                        <span className="min-w-0 shrink">
                           <span className="block truncate text-body text-ink">
                             {row.name}
                           </span>
                           <Detail username={row.username} detail={row.detail} />
                         </span>
-                        <span className="nums latin shrink-0 text-body font-medium text-ink">
+                        <Bar
+                          points={row.points}
+                          max={max}
+                          className="hidden flex-1 sm:block"
+                        />
+                        <span className="nums latin ms-auto shrink-0 text-body font-medium text-ink sm:ms-0">
                           {formatNumber(row.points)}
                         </span>
                       </div>
-                      <Bar points={row.points} max={max} compact />
+                      <Bar
+                        points={row.points}
+                        max={max}
+                        className="mt-3 sm:hidden"
+                      />
                     </li>
                   ))}
                 </ol>
