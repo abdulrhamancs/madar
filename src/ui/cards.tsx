@@ -340,12 +340,56 @@ export function MemberCard({
   username,
   roles = [],
   onClick,
+  compact = false,
 }: {
   name: string;
   username?: string;
   roles?: string[];
   onClick?: () => void;
+  /**
+   * A single row instead of a tile, for the committee rosters.
+   *
+   * Same surface, border, radius and hover as the full card — only the
+   * arrangement changes. The board is a row of portraits and has to stay the
+   * heaviest thing on that page; nine committees of full-size tiles beneath it
+   * would outweigh it and take the section over.
+   */
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={!onClick}
+        className={cx(
+          "group flex w-full items-center gap-3.5 rounded-card border border-divider bg-surface p-3.5 text-start",
+          "transition-[border-color,background-color] duration-settle ease-standard",
+          onClick
+            ? "hover:border-accent/45 hover:bg-raised/40"
+            : "cursor-default"
+        )}
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-accent/35 bg-accent/[0.07]">
+          <span className="text-small font-medium text-accent">
+            {initialsOf(name)}
+          </span>
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-body text-ink">{name}</span>
+          {username && (
+            <span
+              className="latin block truncate text-micro text-faint"
+              dir="ltr"
+            >
+              @{username}
+            </span>
+          )}
+        </span>
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"

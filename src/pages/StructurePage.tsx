@@ -1,7 +1,5 @@
-import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import React from "react";
 import { useI18n } from "../lib/i18nContext";
-import { cx } from "../lib/cx";
 import { CLUB_BOARD, CLUB_SECTORS } from "../lib/clubData";
 import { PageHeader, SubHeading } from "../ui/Section";
 import { Skeleton } from "../ui/States";
@@ -19,9 +17,14 @@ interface Member {
 /**
  * The club as people rather than an org chart.
  *
- * The board is a row of portraits; the committees are an index that opens to
- * reveal its roster. Seats with nobody in them are drawn as an outline rather
- * than hidden — a vacancy is information.
+ * The board is a row of portraits; beneath it each sector lists its committees
+ * with their rosters already open. The committees used to be an index that had
+ * to be clicked open, which meant the club's actual membership — the thing the
+ * page exists to show — was hidden behind nine separate interactions.
+ *
+ * Rosters use the compact card so the board stays the heaviest element here.
+ * Seats and committees with nobody in them are drawn as an outline rather than
+ * hidden — a vacancy is information.
  */
 export function StructurePage({
   members,
@@ -33,7 +36,6 @@ export function StructurePage({
   onViewMember: (member: Member) => void;
 }) {
   const { t, lang } = useI18n();
-  const [openCommittee, setOpenCommittee] = useState<string | null>(null);
 
   const holderOf = (badge: string) =>
     members.find((m) => (m.badges || []).includes(badge));
@@ -117,78 +119,80 @@ export function StructurePage({
                   {sector.title[lang]}
                 </h3>
 
-                <ul className="divide-y divide-divider">
+                {/* Committees stagger in after their sector; the roster inside
+                    each staggers again. `RevealGroup` registers once per group
+                    rather than once per child, so the whole section costs a
+                    couple of dozen observations, not one per person. */}
+                <RevealGroup
+                  variant="up"
+                  step={70}
+                  as="ul"
+                  className="divide-y divide-divider"
+                >
                   {sector.committees.map((committee) => {
-                    const open = openCommittee === committee.name;
                     const roster = loading
                       ? []
                       : members.filter((m) =>
                           (m.committees || []).includes(committee.name)
                         );
                     const CommitteeIcon = committee.icon;
-                    const panelId = `panel-${sector.id}-${committee.name}`;
 
                     return (
-                      <li key={committee.name}>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setOpenCommittee(open ? null : committee.name)
-                          }
-                          aria-expanded={open}
-                          aria-controls={panelId}
-                          className="group -mx-4 flex w-[calc(100%+2rem)] items-center gap-4 px-4 py-5 text-start transition-colors duration-settle hover:bg-raised/40"
-                        >
+                      <li key={committee.name} className="py-7">
+                        {/* Static now, not a disclosure — the roster below is
+                            always rendered, so there is nothing to expand. */}
+                        <div className="flex items-center gap-4">
                           <CommitteeIcon
-                            className="h-5 w-5 shrink-0 text-faint transition-colors duration-quick group-hover:text-accent"
+                            className="h-5 w-5 shrink-0 text-faint"
                             aria-hidden="true"
                           />
-                          <span className="min-w-0 flex-1 text-body text-ink">
+                          <h4 className="min-w-0 flex-1 text-body text-ink">
                             {committee.name}
-                          </span>
+                          </h4>
                           <span className="nums latin shrink-0 text-small text-faint">
                             {loading ? "—" : roster.length}
                           </span>
-                          <ChevronDown
-                            className={cx(
-                              "h-4 w-4 shrink-0 text-faint transition-transform duration-settle ease-standard",
-                              open && "rotate-180"
-                            )}
-                            aria-hidden="true"
-                          />
-                        </button>
+                        </div>
 
-                        {open && (
-                          <div id={panelId} className="pb-8 pt-2">
-                            {roster.length === 0 ? (
-                              <p className="text-small text-faint">
-                                {t("no_members_yet")}
-                              </p>
-                            ) : (
-                              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {roster.map((member, index) => (
-                                  <li
-                                    key={member.id}
-                                    className="enter"
-                                    style={{
-                                      ["--enter-delay" as string]: `${index * 50}ms`,
-                                    }}
-                                  >
-                                    <MemberCard
-                                      name={member.fullName}
-                                      username={member.username}
-                                      onClick={() => onViewMember(member)}
-                                    />
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        )}
+                        <div className="mt-5">
+                          {roster.length === 0 ? (
+                            // Same dashed treatment the board uses for an
+                            // empty seat: a vacancy is information, not an
+                            // absence to hide.
+                            <p className="rounded-card border border-dashed border-divider px-4 py-5 text-center text-small text-faint">
+                              {t("no_members_yet")}
+                            </p>
+                          ) : (
+                            <RevealGroup
+                              variant="up"
+                              step={45}
+                              as="ul"
+                              // `grid-cols-1` is not decorative. Without it the
+                              // single-column fallback is an auto track sized to
+                              // max-content, so one long unbroken name widens the
+                              // column past the viewport and the page scrolls
+                              // sideways. The explicit class emits
+                              // `minmax(0, 1fr)`, which lets the name truncate
+                              // instead of pushing the layout.
+                              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                            >
+                              {roster.map((member) => (
+                                <li key={member.id}>
+                                  <MemberCard
+                                    compact
+                                    name={member.fullName}
+                                    username={member.username}
+                                    onClick={() => onViewMember(member)}
+                                  />
+                                </li>
+                              ))}
+                            </RevealGroup>
+                          )}
+                        </div>
                       </li>
                     );
                   })}
-                </ul>
+                </RevealGroup>
               </Reveal>
             );
           })}

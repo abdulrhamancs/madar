@@ -440,10 +440,13 @@
 /* ==========================================================================
    Motion system
 
-   Reveals are driven by a `data-reveal` attribute toggled by an
-   IntersectionObserver (see src/ui/Reveal.tsx). The animation itself is pure
-   CSS — no JS runs per frame, and only `opacity`/`transform`/`clip-path` are
-   touched, so everything stays on the compositor.
+   Reveals are driven by a `data-reveal` attribute, paired with `data-visible`
+   once the element has been seen. Despite what this note used to claim, the
+   engine is deliberately *not* an IntersectionObserver — see the reasoning in
+   src/ui/Reveal.tsx, which turns on content that starts at `opacity: 0` never
+   being left invisible. The animation itself is pure CSS: no JS runs per
+   frame, and only `opacity`/`transform`/`clip-path` are touched, so everything
+   stays on the compositor.
    ========================================================================== */
 @layer utilities {
   .nums {
