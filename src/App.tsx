@@ -38,6 +38,26 @@ const mapProfile = (row: any) => ({
   hasSelectedCommittees: row.has_selected_committees,
 });
 
+/**
+ * Display members are people listed on the site who never sign in. They are
+ * mapped into the same shape as a profile so the structure page can treat both
+ * alike — `isDisplay` is the only thing that distinguishes them, and there is
+ * deliberately no username: they have no account to link to.
+ */
+const mapDisplayMember = (row: any) => ({
+  id: row.id,
+  fullName: row.full_name,
+  username: "",
+  email: "",
+  linkedin: "",
+  twitter: "",
+  role: "member",
+  committees: row.committees || [],
+  badges: row.badges || [],
+  hasSelectedCommittees: true,
+  isDisplay: true,
+});
+
 const mapNews = (row: any) => ({
   id: row.id,
   title: row.title,
@@ -173,6 +193,7 @@ function MadarApp({
 
   // ---------- data ----------
   const [usersDb, setUsersDb] = useState<any[]>([]);
+  const [displayMembersDb, setDisplayMembersDb] = useState<any[]>([]);
   const [newsDb, setNewsDb] = useState<any[]>([]);
   const [pointsDb, setPointsDb] = useState<any[]>([]);
   const [eventsDb, setEventsDb] = useState<any[]>([]);
@@ -206,7 +227,7 @@ function MadarApp({
 
   // ---------- admin ----------
   const [adminTab, setAdminTab] = useState<
-    "members" | "news" | "points" | "events"
+    "members" | "display" | "news" | "points" | "events"
   >("members");
   const [adminNewsForm, setAdminNewsForm] = useState({
     title: "",
@@ -216,6 +237,12 @@ function MadarApp({
   });
   const [adminPointsForm, setAdminPointsForm] = useState({
     name: "",
+    points: "",
+  });
+  const [adminDisplayForm, setAdminDisplayForm] = useState({
+    fullName: "",
+    badge: "",
+    committee: "",
     points: "",
   });
   const [adminEventForm, setAdminEventForm] = useState({
@@ -243,13 +270,16 @@ function MadarApp({
 
   const isAdmin = currentUser?.role === "admin";
 
+  /** The roster as the public sees it: real accounts plus listed-only people. */
+  const allMembers = [...usersDb, ...displayMembersDb];
+
   // ==========================================
   // 🟡 Data loading  (queries unchanged)
   // ==========================================
   const fetchAllData = useCallback(async () => {
     setLoadError(false);
     try {
-      const [profilesRes, newsRes, pointsRes, eventsRes, regsRes] =
+      const [profilesRes, newsRes, pointsRes, eventsRes, regsRes, displayRes] =
         await Promise.all([
           supabase.from("profiles").select("*"),
           supabase
@@ -264,6 +294,10 @@ function MadarApp({
           supabase
             .from("event_registrations")
             .select("event_id, profiles(username)"),
+          supabase
+            .from("display_members")
+            .select("*")
+            .order("created_at", { ascending: true }),
         ]);
 
       if (profilesRes.error || newsRes.error || eventsRes.error) {
@@ -273,6 +307,7 @@ function MadarApp({
 
       const usersList = (profilesRes.data || []).map(mapProfile);
       setUsersDb(usersList);
+      setDisplayMembersDb((displayRes?.data || []).map(mapDisplayMember));
       setNewsDb((newsRes.data || []).map(mapNews));
       setPointsDb((pointsRes.data || []).map(mapPoints));
 
@@ -722,6 +757,107 @@ function MadarApp({
     setPointsDb(pointsDb.filter((p) => p.id !== id));
   };
 
+  // ---------- display members ----------
+  // People listed on the site who never sign in. The row carries the name and
+  // its badge/committee; the score goes to `points`, which is keyed by name and
+  // shared with real members, so the leaderboard stays one ranked list.
+  const syncDisplayPoints = async (name: string, rawPoints: string) => {
+    const trimmed = name.trim();
+    if (!trimmed || rawPoints === "") return;
+    const value = parseInt(rawPoints, 10) || 0;
+    const { data, error } = await supabase
+      .from("points")
+      .upsert({ name: trimmed, points: value }, { onConflict: "name" })
+      .select()
+      .single();
+    if (error || !data) return;
+    setPointsDb((prev) => {
+      const mapped = mapPoints(data);
+      return prev.some((p) => p.name === trimmed)
+        ? prev.map((p) => (p.name === trimmed ? mapped : p))
+        : [...prev, mapped];
+    });
+  };
+
+  const handleAddDisplayMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const fullName = adminDisplayForm.fullName.trim();
+    if (!fullName) return;
+    setAdminPending(true);
+    const { data, error } = await supabase
+      .from("display_members")
+      .insert({
+        full_name: fullName,
+        // One each for now; the columns are arrays so this can grow without a
+        // migration.
+        badges: adminDisplayForm.badge ? [adminDisplayForm.badge] : [],
+        committees: adminDisplayForm.committee ? [adminDisplayForm.committee] : [],
+      })
+      .select()
+      .single();
+    if (error || !data) {
+      setAdminPending(false);
+      return fail(error);
+    }
+    await syncDisplayPoints(fullName, adminDisplayForm.points);
+    setAdminPending(false);
+    setDisplayMembersDb([...displayMembersDb, mapDisplayMember(data)]);
+    setAdminDisplayForm({ fullName: "", badge: "", committee: "", points: "" });
+    notify(t("saved"));
+  };
+
+  const handleUpdateDisplayMember = async (
+    id: string,
+    patch: { fullName?: string; badge?: string; committee?: string; points?: string }
+  ) => {
+    const existing = displayMembersDb.find((m) => m.id === id);
+    if (!existing) return;
+    const nextName = (patch.fullName ?? existing.fullName).trim();
+    if (!nextName) return;
+
+    setAdminPending(true);
+    const { data, error } = await supabase
+      .from("display_members")
+      .update({
+        full_name: nextName,
+        badges:
+          patch.badge !== undefined
+            ? patch.badge
+              ? [patch.badge]
+              : []
+            : existing.badges,
+        committees:
+          patch.committee !== undefined
+            ? patch.committee
+              ? [patch.committee]
+              : []
+            : existing.committees,
+      })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error || !data) {
+      setAdminPending(false);
+      return fail(error);
+    }
+    if (patch.points !== undefined) await syncDisplayPoints(nextName, patch.points);
+    setAdminPending(false);
+    setDisplayMembersDb(
+      displayMembersDb.map((m) => (m.id === id ? mapDisplayMember(data) : m))
+    );
+    notify(t("saved"));
+  };
+
+  const handleDeleteDisplayMember = async (id: string) => {
+    const { error } = await supabase
+      .from("display_members")
+      .delete()
+      .eq("id", id);
+    if (error) return fail(error);
+    setDisplayMembersDb(displayMembersDb.filter((m) => m.id !== id));
+    notify(t("saved"));
+  };
+
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
@@ -951,7 +1087,7 @@ function MadarApp({
               loading={loading}
               news={newsDb}
               events={eventsDb}
-              memberCount={usersDb.length}
+              memberCount={allMembers.length}
               currentUser={currentUser}
               onNavigate={navigate}
               onRegister={() => goToAuth("register")}
@@ -961,7 +1097,10 @@ function MadarApp({
 
           {activePage === "structure" && (
             <StructurePage
-              members={usersDb}
+              // Real accounts and display members are one roster here: they
+              // share a shape, so seats and committee rosters resolve across
+              // both without the page knowing the difference.
+              members={allMembers}
               loading={loading}
               onViewMember={setViewUserModal}
             />
@@ -1057,6 +1196,15 @@ function MadarApp({
               onPointsFormChange={setAdminPointsForm}
               onAddPoints={handleAddPoints}
               onDeletePoints={handleDeletePoints}
+              displayMembers={displayMembersDb}
+              displayForm={adminDisplayForm}
+              onDisplayFormChange={setAdminDisplayForm}
+              onAddDisplayMember={handleAddDisplayMember}
+              onUpdateDisplayMember={handleUpdateDisplayMember}
+              onDeleteDisplayMember={handleDeleteDisplayMember}
+              pointsByName={Object.fromEntries(
+                pointsDb.map((p) => [p.name, p.points])
+              )}
               eventForm={adminEventForm}
               onEventFormChange={setAdminEventForm}
               onAddEvent={handleAddEvent}
@@ -1084,9 +1232,13 @@ function MadarApp({
                 {initialsOf(viewUserModal.fullName)}
               </span>
             </span>
-            <p className="latin mt-4 text-small text-faint" dir="ltr">
-              @{viewUserModal.username}
-            </p>
+            {/* Listed members have no account, so there is no handle to show —
+                without this guard the modal rendered a bare "@". */}
+            {viewUserModal.username && (
+              <p className="latin mt-4 text-small text-faint" dir="ltr">
+                @{viewUserModal.username}
+              </p>
+            )}
             {viewUserModal.badges?.length > 0 && (
               <ul className="mt-5 flex flex-wrap justify-center gap-2">
                 {viewUserModal.badges.map((badge: string) => (

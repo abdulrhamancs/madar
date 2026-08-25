@@ -2,6 +2,7 @@ import React from "react";
 import { Plus, Trash2, Users, Ban } from "lucide-react";
 import { useI18n } from "../lib/i18nContext";
 import { AVAILABLE_BADGES } from "../lib/i18n";
+import { CLUB_SECTORS } from "../lib/clubData";
 import { cx } from "../lib/cx";
 import { PageHeader } from "../ui/Section";
 import { Button, IconButton } from "../ui/Button";
@@ -10,13 +11,19 @@ import { SelectField, TextArea, TextField } from "../ui/Field";
 import { EmptyState } from "../ui/States";
 import { Reveal } from "../ui/Reveal";
 
-type Tab = "members" | "news" | "points" | "events";
+type Tab = "members" | "display" | "news" | "points" | "events";
 
 const TABS: {
   id: Tab;
-  labelKey: "admin_members" | "admin_news" | "admin_points" | "admin_events";
+  labelKey:
+    | "admin_members"
+    | "admin_display"
+    | "admin_news"
+    | "admin_points"
+    | "admin_events";
 }[] = [
   { id: "members", labelKey: "admin_members" },
+  { id: "display", labelKey: "admin_display" },
   { id: "news", labelKey: "admin_news" },
   { id: "points", labelKey: "admin_points" },
   { id: "events", labelKey: "admin_events" },
@@ -46,6 +53,24 @@ export interface AdminPageProps {
   onPointsFormChange: (form: any) => void;
   onAddPoints: (e: React.FormEvent) => void;
   onDeletePoints: (id: number) => void;
+
+  /** People listed on the site with no login account. */
+  displayMembers: any[];
+  displayForm: any;
+  onDisplayFormChange: (form: any) => void;
+  onAddDisplayMember: (e: React.FormEvent) => void;
+  onUpdateDisplayMember: (
+    id: string,
+    patch: {
+      fullName?: string;
+      badge?: string;
+      committee?: string;
+      points?: string;
+    }
+  ) => void;
+  onDeleteDisplayMember: (id: string) => void;
+  /** Current score per name, so a listed member's points can be edited inline. */
+  pointsByName: Record<string, number>;
 
   eventForm: any;
   onEventFormChange: (form: any) => void;
@@ -113,6 +138,7 @@ export function AdminPage(props: AdminPageProps) {
         className="mt-12"
       >
         {tab === "members" && <MembersTab {...props} />}
+        {tab === "display" && <DisplayMembersTab {...props} />}
         {tab === "news" && <NewsTab {...props} />}
         {tab === "points" && <PointsTab {...props} />}
         {tab === "events" && <EventsTab {...props} />}
@@ -321,6 +347,234 @@ function NewsTab({
         </>
       )}
     </Workbench>
+  );
+}
+
+/**
+ * Listed members: people who appear on the site but never sign in.
+ *
+ * Badge and committee are dropdowns rather than free text on purpose — both are
+ * join keys against the structure page, so a typo would not fail loudly, it
+ * would silently drop the person off the page.
+ *
+ * Points are not a column on the row. They live in the shared `points` table,
+ * keyed by name, so a listed member ranks in the same single leaderboard as
+ * everyone else instead of a parallel one.
+ */
+function DisplayMembersTab({
+  displayMembers,
+  displayForm,
+  onDisplayFormChange,
+  onAddDisplayMember,
+  onUpdateDisplayMember,
+  onDeleteDisplayMember,
+  pointsByName,
+  pending,
+}: AdminPageProps) {
+  const { t, lang } = useI18n();
+  const set = (patch: any) => onDisplayFormChange({ ...displayForm, ...patch });
+
+  const committees = CLUB_SECTORS.flatMap((sector) =>
+    sector.committees.map((committee) => ({
+      sector: sector.title[lang],
+      name: committee.name,
+    }))
+  );
+
+  return (
+    <Workbench
+      form={
+        <form onSubmit={onAddDisplayMember} className="space-y-5" noValidate>
+          <p className="text-small text-muted">{t("display_member_lead")}</p>
+
+          <TextField
+            label={t("fullname")}
+            required
+            value={displayForm.fullName}
+            onChange={(e) => set({ fullName: e.target.value })}
+          />
+
+          <SelectField
+            label={t("display_badge")}
+            value={displayForm.badge}
+            onChange={(e) => set({ badge: e.target.value })}
+          >
+            <option value="">{t("display_none")}</option>
+            {AVAILABLE_BADGES.map((badge) => (
+              <option key={badge} value={badge}>
+                {badge}
+              </option>
+            ))}
+          </SelectField>
+
+          <SelectField
+            label={t("display_committee")}
+            value={displayForm.committee}
+            onChange={(e) => set({ committee: e.target.value })}
+          >
+            <option value="">{t("display_none")}</option>
+            {committees.map(({ sector, name }) => (
+              <option key={name} value={name}>
+                {sector} — {name}
+              </option>
+            ))}
+          </SelectField>
+
+          <TextField
+            label={t("admin_points")}
+            type="number"
+            inputMode="numeric"
+            dir="ltr"
+            value={displayForm.points}
+            onChange={(e) => set({ points: e.target.value })}
+          />
+
+          <Button type="submit" pending={pending} block>
+            <Plus className="h-4 w-4" />
+            {t("add_btn")}
+          </Button>
+        </form>
+      }
+    >
+      {displayMembers.length === 0 ? (
+        <EmptyState title={t("no_display_members")} />
+      ) : (
+        <>
+          <RecordCount
+            label={t("members_count")}
+            value={displayMembers.length}
+          />
+          <ul className="divide-y divide-divider border-y border-divider">
+            {displayMembers.map((member) => (
+              <DisplayMemberRow
+                key={member.id}
+                member={member}
+                committees={committees}
+                points={pointsByName[member.fullName]}
+                pending={pending}
+                onSave={onUpdateDisplayMember}
+                onDelete={onDeleteDisplayMember}
+              />
+            ))}
+          </ul>
+        </>
+      )}
+    </Workbench>
+  );
+}
+
+/** One editable row. Kept local so each row owns its own draft state. */
+function DisplayMemberRow({
+  member,
+  committees,
+  points,
+  pending,
+  onSave,
+  onDelete,
+}: {
+  member: any;
+  committees: { sector: string; name: string }[];
+  points?: number;
+  pending: boolean;
+  onSave: AdminPageProps["onUpdateDisplayMember"];
+  onDelete: (id: string) => void;
+}) {
+  const { t, formatNumber } = useI18n();
+  const [open, setOpen] = React.useState(false);
+  const [draft, setDraft] = React.useState({
+    fullName: member.fullName,
+    badge: member.badges[0] || "",
+    committee: member.committees[0] || "",
+    points: points === undefined ? "" : String(points),
+  });
+
+  return (
+    <li className="py-5">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-body font-medium text-ink">{member.fullName}</p>
+          <p className="mt-1 text-micro text-faint">
+            {[member.badges[0], member.committees[0]]
+              .filter(Boolean)
+              .join(" · ") || t("display_none")}
+          </p>
+        </div>
+        {points !== undefined && (
+          <span className="nums latin shrink-0 text-body font-medium text-ink">
+            {formatNumber(points)}
+          </span>
+        )}
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+        >
+          {t("update_profile")}
+        </Button>
+        <IconButton
+          label={`${t("delete_btn")}: ${member.fullName}`}
+          variant="ghost"
+          onClick={() => onDelete(member.id)}
+          className="text-danger hover:bg-danger/10"
+        >
+          <Trash2 className="h-4 w-4" />
+        </IconButton>
+      </div>
+
+      {open && (
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <TextField
+            label={t("fullname")}
+            value={draft.fullName}
+            onChange={(e) => setDraft({ ...draft, fullName: e.target.value })}
+          />
+          <TextField
+            label={t("admin_points")}
+            type="number"
+            inputMode="numeric"
+            dir="ltr"
+            value={draft.points}
+            onChange={(e) => setDraft({ ...draft, points: e.target.value })}
+          />
+          <SelectField
+            label={t("display_badge")}
+            value={draft.badge}
+            onChange={(e) => setDraft({ ...draft, badge: e.target.value })}
+          >
+            <option value="">{t("display_none")}</option>
+            {AVAILABLE_BADGES.map((badge) => (
+              <option key={badge} value={badge}>
+                {badge}
+              </option>
+            ))}
+          </SelectField>
+          <SelectField
+            label={t("display_committee")}
+            value={draft.committee}
+            onChange={(e) => setDraft({ ...draft, committee: e.target.value })}
+          >
+            <option value="">{t("display_none")}</option>
+            {committees.map(({ sector, name }) => (
+              <option key={name} value={name}>
+                {sector} — {name}
+              </option>
+            ))}
+          </SelectField>
+          <div className="sm:col-span-2">
+            <Button
+              pending={pending}
+              onClick={() => {
+                onSave(member.id, draft);
+                setOpen(false);
+              }}
+            >
+              {t("save_btn")}
+            </Button>
+          </div>
+        </div>
+      )}
+    </li>
   );
 }
 
