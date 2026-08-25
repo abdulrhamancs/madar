@@ -5,6 +5,7 @@ import { PageHeader, SubHeading } from "../ui/Section";
 import { Skeleton } from "../ui/States";
 import { Reveal, RevealGroup } from "../ui/Reveal";
 import { MemberCard } from "../ui/cards";
+import { Tag } from "../ui/Badge";
 
 interface Member {
   id: string;
@@ -140,29 +141,39 @@ export function StructurePage({
                     return (
                       <li key={committee.name} className="py-7">
                         {/* Static now, not a disclosure — the roster below is
-                            always rendered, so there is nothing to expand. */}
-                        <div className="flex items-center gap-4">
+                            always rendered, so there is nothing to expand.
+
+                            The name deliberately does not take `flex-1`. It did
+                            while this was a disclosure, because the row was one
+                            wide target and the count sat beside the chevron at
+                            the far edge. With the chevron gone that stretch left
+                            the count marooned about a thousand pixels from the
+                            word it counts. Sized to its text, the two read as
+                            one thing. */}
+                        <div className="flex items-center gap-3">
                           <CommitteeIcon
                             className="h-5 w-5 shrink-0 text-faint"
                             aria-hidden="true"
                           />
-                          <h4 className="min-w-0 flex-1 text-body text-ink">
+                          <h4 className="min-w-0 truncate text-body text-ink">
                             {committee.name}
                           </h4>
-                          <span className="nums latin shrink-0 text-small text-faint">
-                            {loading ? "—" : roster.length}
-                          </span>
+                          {/* An empty committee says so here rather than in a
+                              full-width panel below. It used to do both — a "0"
+                              here and a box saying شاغر underneath — which
+                              stated the same fact twice and gave the emptiest
+                              rows the most room on the page. */}
+                          <Tag className="nums latin shrink-0">
+                            {loading
+                              ? "—"
+                              : roster.length > 0
+                              ? roster.length
+                              : t("vacant")}
+                          </Tag>
                         </div>
 
-                        <div className="mt-5">
-                          {roster.length === 0 ? (
-                            // Same dashed treatment the board uses for an
-                            // empty seat: a vacancy is information, not an
-                            // absence to hide.
-                            <p className="rounded-card border border-dashed border-divider px-4 py-5 text-center text-small text-faint">
-                              {t("no_members_yet")}
-                            </p>
-                          ) : (
+                        {roster.length > 0 && (
+                          <div className="mt-5">
                             <RevealGroup
                               variant="up"
                               step={45}
@@ -187,8 +198,8 @@ export function StructurePage({
                                 </li>
                               ))}
                             </RevealGroup>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </li>
                     );
                   })}
