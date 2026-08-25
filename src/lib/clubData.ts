@@ -28,9 +28,9 @@ export interface BoardSeat {
 }
 
 export const CLUB_BOARD: BoardSeat[] = [
-  { badge: "رئيس مجلس النادي", icon: Crown },
+  { badge: "رئيس النادي", icon: Crown },
   { badge: "نائب الرئيس", icon: Award },
-  { badge: "رئيس القطاع الجوهري", icon: Star },
+  { badge: "رئيس القطاع التطويري", icon: Star },
   { badge: "رئيس القطاع الإبداعي", icon: Palette },
   { badge: "رئيس القطاع التشغيلي", icon: Activity },
 ];
@@ -49,13 +49,16 @@ export interface Sector {
 
 export const CLUB_SECTORS: Sector[] = [
   {
-    id: "core",
-    title: { ar: "القطاع الجوهري", en: "Core Sector" },
+    // Identified by its committees (الموارد البشرية / مدار), which match the
+    // club's org chart. Was labelled "القطاع الجوهري" / "Core Sector"; the
+    // chart names it التطويري. `id` is a React key only — no database meaning.
+    id: "development",
+    title: { ar: "القطاع التطويري", en: "Development Sector" },
     icon: Star,
     committees: [
       { name: "لجنة الموارد البشرية", icon: Users },
       { name: "لجنة مدار", icon: Globe },
-      { name: "لجنة التدريب وورش العمل", icon: BookOpen },
+      { name: "لجنة واعد", icon: BookOpen },
     ],
   },
   {
@@ -64,8 +67,8 @@ export const CLUB_SECTORS: Sector[] = [
     icon: Palette,
     committees: [
       { name: "اللجنة الإعلامية", icon: Camera },
-      { name: "اللجنة التعليمية والتثقيفية", icon: Lightbulb },
-      { name: "لجنة البودكاست", icon: Mic },
+      { name: "لجنة المحتوى العلمي", icon: Lightbulb },
+      { name: "لجنة صناعة المحتوى", icon: Mic },
     ],
   },
   {
@@ -73,7 +76,7 @@ export const CLUB_SECTORS: Sector[] = [
     title: { ar: "القطاع التشغيلي", en: "Operations Sector" },
     icon: Activity,
     committees: [
-      { name: "لجنة الخدمات", icon: Briefcase },
+      { name: "لجنة الخدمات اللوجستية", icon: Briefcase },
       { name: "لجنة تنظيم الفعاليات", icon: Calendar },
       { name: "لجنة العلاقات العامة والشراكات", icon: Handshake },
     ],
