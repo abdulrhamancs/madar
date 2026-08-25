@@ -1194,6 +1194,9 @@ function MadarApp({
           {activePage === "points" && (
             <PointsPage
               points={pointsDb}
+              // Same roster the structure page uses, so everyone appears on
+              // the board from the start rather than only once they score.
+              members={allMembers}
               loading={loading}
               error={loadError}
               onRetry={() => {
