@@ -256,6 +256,16 @@ function MadarApp({
   const [adminPending, setAdminPending] = useState(false);
   const [viewEventUsers, setViewEventUsers] = useState<any>(null);
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<string | null>(null);
+  /**
+   * Pending destructive action for the content tabs. One piece of state rather
+   * than four: every case asks the same question and differs only in the row
+   * it points at.
+   */
+  const [confirmDelete, setConfirmDelete] = useState<{
+    kind: "news" | "event" | "points" | "display";
+    id: any;
+    label: string;
+  } | null>(null);
 
   // ---------- misc ui ----------
   const [selectedUserCommittees, setSelectedUserCommittees] = useState<string[]>(
@@ -724,10 +734,42 @@ function MadarApp({
     notify(t("saved"));
   };
 
+  /**
+   * The object key inside the `media` bucket, or null for anything else —
+   * an external link, a YouTube URL, an empty field.
+   */
+  const bucketKeyOf = (url: string | undefined | null) => {
+    if (!url) return null;
+    const marker = "/storage/v1/object/public/media/";
+    const at = url.indexOf(marker);
+    if (at === -1) return null;
+    const key = url.slice(at + marker.length).split("?")[0];
+    return key ? decodeURIComponent(key) : null;
+  };
+
   const handleDeleteNews = async (id: number) => {
+    const item = newsDb.find((n) => n.id === id);
     const { error } = await supabase.from("news").delete().eq("id", id);
     if (error) return fail(error);
-    setNewsDb(newsDb.filter((n) => n.id !== id));
+
+    const remaining = newsDb.filter((n) => n.id !== id);
+    setNewsDb(remaining);
+
+    // Drop the uploaded file too, so deleting a story does not quietly leave
+    // its image behind in the bucket forever. Only if nothing else points at
+    // it: the same URL can legitimately be reused across items, and removing a
+    // file another story still renders would break that story.
+    const key = bucketKeyOf(item?.mediaUrl);
+    if (!key) return;
+    const stillUsed = remaining.some((n) => bucketKeyOf(n.mediaUrl) === key);
+    if (stillUsed) return;
+
+    const { error: storageError } = await supabase.storage
+      .from("media")
+      .remove([key]);
+    // The row is already gone, so a failure here is untidy rather than
+    // harmful — report it without pretending the delete failed.
+    if (storageError) console.error(storageError);
   };
 
   const handleAddPoints = async (e: React.FormEvent) => {
@@ -1202,17 +1244,36 @@ function MadarApp({
               newsForm={adminNewsForm}
               onNewsFormChange={setAdminNewsForm}
               onAddNews={handleAddNews}
-              onDeleteNews={handleDeleteNews}
+              // Destructive actions ask first — see the dialog below.
+              onDeleteNews={(id) =>
+                setConfirmDelete({
+                  kind: "news",
+                  id,
+                  label: newsDb.find((n) => n.id === id)?.title || "",
+                })
+              }
               pointsForm={adminPointsForm}
               onPointsFormChange={setAdminPointsForm}
               onAddPoints={handleAddPoints}
-              onDeletePoints={handleDeletePoints}
+              onDeletePoints={(id) =>
+                setConfirmDelete({
+                  kind: "points",
+                  id,
+                  label: pointsDb.find((p) => p.id === id)?.name || "",
+                })
+              }
               displayMembers={displayMembersDb}
               displayForm={adminDisplayForm}
               onDisplayFormChange={setAdminDisplayForm}
               onAddDisplayMember={handleAddDisplayMember}
               onUpdateDisplayMember={handleUpdateDisplayMember}
-              onDeleteDisplayMember={handleDeleteDisplayMember}
+              onDeleteDisplayMember={(id) =>
+                setConfirmDelete({
+                  kind: "display",
+                  id,
+                  label: displayMembersDb.find((m) => m.id === id)?.fullName || "",
+                })
+              }
               pointsByName={Object.fromEntries(
                 pointsDb.map((p) => [p.name, p.points])
               )}
@@ -1220,7 +1281,13 @@ function MadarApp({
               onEventFormChange={setAdminEventForm}
               onAddEvent={handleAddEvent}
               onCancelEvent={handleCancelEvent}
-              onDeleteEvent={handleDeleteEvent}
+              onDeleteEvent={(id) =>
+                setConfirmDelete({
+                  kind: "event",
+                  id,
+                  label: eventsDb.find((ev) => ev.id === id)?.title || "",
+                })
+              }
               onViewRegistrations={setViewEventUsers}
               pending={adminPending}
             />
@@ -1336,6 +1403,42 @@ function MadarApp({
           confirmDeleteUser && handleDeleteUser(confirmDeleteUser)
         }
         onCancel={() => setConfirmDeleteUser(null)}
+      />
+
+      {/* One dialog for every destructive content action. The message names
+          the kind; the title of the row being removed is appended so a
+          mis-click on the wrong row is visible before it is committed. */}
+      <ConfirmDialog
+        open={Boolean(confirmDelete)}
+        title={t("confirm_delete_title")}
+        message={
+          confirmDelete
+            ? `${t(
+                confirmDelete.kind === "news"
+                  ? "confirm_delete_news"
+                  : confirmDelete.kind === "event"
+                  ? "confirm_delete_event"
+                  : confirmDelete.kind === "points"
+                  ? "confirm_delete_points"
+                  : "confirm_delete_display"
+              )}${confirmDelete.label ? `\n\n“${confirmDelete.label}”` : ""}`
+            : ""
+        }
+        confirmLabel={t("delete_btn")}
+        cancelLabel={t("cancel")}
+        closeLabel={t("close")}
+        destructive
+        pending={adminPending}
+        onConfirm={async () => {
+          if (!confirmDelete) return;
+          const { kind, id } = confirmDelete;
+          setConfirmDelete(null);
+          if (kind === "news") await handleDeleteNews(id);
+          else if (kind === "event") await handleDeleteEvent(id);
+          else if (kind === "points") await handleDeletePoints(id);
+          else await handleDeleteDisplayMember(id);
+        }}
+        onCancel={() => setConfirmDelete(null)}
       />
 
       <ConfirmDialog
