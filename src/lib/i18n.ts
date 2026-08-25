@@ -5,11 +5,10 @@
 
 export type Lang = "ar" | "en";
 
+// The mark is drawn inline — see `ui/MadarMark` — so there are no logo URLs
+// here. Two pointing at an external image host used to sit in this object,
+// unreferenced by anything since the redesign.
 export const CLUB_DATA = {
-  logoUrlLight:
-    "https://i.postimg.cc/9Mr0S2VV/Gemini-Generated-Image-kw9607kw9607kw96-1-removebg-preview.png",
-  logoUrlDark:
-    "https://i.postimg.cc/rs2TJ2p6/Gemini-Generated-Image-wqmn48wqmn48wqmn-removebg-preview.png",
   contact: {
     email: "info@madarclub.com",
     phone: "+966 5X XXX XXXX",
