@@ -694,7 +694,13 @@ function MadarApp({
 
   const handleAddNews = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminNewsForm.title || !adminNewsForm.content) return;
+    // Say why nothing happened. These forms set `noValidate`, so the browser
+    // never raises its own prompt for a missing `required` field, and returning
+    // in silence made a click on "publish" look like a dead button.
+    if (!adminNewsForm.title || !adminNewsForm.content) {
+      notify(t("fill_all"), "danger");
+      return;
+    }
     setAdminPending(true);
     const { data, error } = await supabase
       .from("news")
@@ -726,7 +732,10 @@ function MadarApp({
 
   const handleAddPoints = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminPointsForm.name || !adminPointsForm.points) return;
+    if (!adminPointsForm.name || !adminPointsForm.points) {
+      notify(t("fill_all"), "danger");
+      return;
+    }
     const pointsNum = parseInt(adminPointsForm.points, 10) || 0;
     setAdminPending(true);
     const { data, error } = await supabase
@@ -782,7 +791,10 @@ function MadarApp({
   const handleAddDisplayMember = async (e: React.FormEvent) => {
     e.preventDefault();
     const fullName = adminDisplayForm.fullName.trim();
-    if (!fullName) return;
+    if (!fullName) {
+      notify(t("fill_all"), "danger");
+      return;
+    }
     setAdminPending(true);
     const { data, error } = await supabase
       .from("display_members")
@@ -864,8 +876,10 @@ function MadarApp({
       !adminEventForm.title ||
       !adminEventForm.startDate ||
       !adminEventForm.endDate
-    )
+    ) {
+      notify(t("fill_all"), "danger");
       return;
+    }
     setAdminPending(true);
     const { data, error } = await supabase
       .from("events")
