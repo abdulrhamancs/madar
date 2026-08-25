@@ -6,20 +6,29 @@ The website and member portal for **Madar Club**, a student club in Taif.
 > *"In Madar, a mark that lasts, and a thought that's steered."*
 
 Arabic-first, right-to-left by default, with a full English translation. The
-public site and the member portal are one app: the same routes serve visitors,
-signed-in members and admins, gated by role.
+whole site is public to read; one admin account maintains it.
+
+**The club is listed, not self-service.** Members do not create accounts —
+there is no public sign-up. An admin adds people, and they appear on the
+structure page and the leaderboard straight away. The app still carries a full
+auth stack, and a member *can* hold a real account, but that is the exception
+rather than the way the club is run. The practical consequence runs through the
+whole codebase: most people on the site have no `auth.users` row at all.
 
 ---
 
 ## Features
 
-- **Club structure** — board, three sectors, nine committees, with live rosters
+- **Club structure** — board, three sectors, nine committees, with rosters
+  shown inline rather than behind a disclosure
 - **Events** — browse, filter by status, register; admins create and cancel
-- **News** — magazine layout with image and YouTube/video embeds
-- **Leaderboard** — points table
+- **News** — magazine layout, with media uploaded from the device or linked
+  externally (YouTube and the like)
+- **Leaderboard** — every member from the start, on zero until they score,
+  ranked with a share bar; admins run it rather than compete on it
 - **Member profiles** — badges, committees, social links
-- **Admin panel** — members, news, points and events, in the same design system
-- **Onboarding** — new members pick up to three committees
+- **Admin panel** — members, listed members, news, points and events, in the
+  same design system
 - **Light / dark theme** and **Arabic ⇄ English**, both persisted
 
 ## Design system
@@ -96,21 +105,70 @@ is absent.
 
 ## Database
 
-Five tables in Supabase:
+Six tables in Supabase:
 
 | Table | Holds |
 |---|---|
-| `profiles` | members — name, username, role, committees, badges |
+| `profiles` | accounts — name, username, role, committees, badges |
+| `display_members` | listed people with no account — name, badges, committees |
 | `events` | title, description, link, start/end dates, cancelled flag |
 | `event_registrations` | join table between `profiles` and `events` |
 | `news` | title, content, optional media URL and type |
-| `points` | leaderboard rows |
+| `points` | leaderboard rows, keyed by name |
 
-Members sign up with a **username**, not an email. Supabase Auth requires an
+### Two kinds of member
+
+`profiles.id` references `auth.users`, so a profile cannot exist without an
+account — and Postgres has no conditional foreign key. Rather than drop that
+constraint, people without accounts live in `display_members`, which mirrors
+the same `badges` and `committees` array shape. The two are concatenated into
+one roster in `App.tsx`, so the structure page and the leaderboard treat them
+alike and never ask which kind they are looking at.
+
+`points` is keyed by **name**, not by a member id, and is deliberately
+independent of both tables. That is what lets the leaderboard rank accounts and
+listed members in one table, and why a score recorded against someone who is
+not currently listed still shows rather than vanishing.
+
+### Auth
+
+Accounts sign in with a **username**, not an email. Supabase Auth requires an
 address, so a stable synthetic one is derived
-(`<username>@members.madarclub.com`) — see `src/lib/supabaseClient.ts`. Admin
-access is a `role` column on `profiles`; the UI hides admin routes, but the
-real enforcement belongs in RLS policies.
+(`<username>@members.madarclub.com`) — see `src/lib/supabaseClient.ts`.
+
+Because those addresses cannot receive mail, **email confirmation must stay
+off** in the Auth settings. With it on, `signUp()` returns no session, so the
+client is still anonymous when it writes the profile and the row-level policy
+rejects it — which surfaces as a confusing RLS error rather than a mail
+problem. `handle_new_user` also writes the profile server-side, so the row
+survives even if the client never gets to make that call.
+
+### Enforcement
+
+Access control is in the database, not the interface:
+
+| | |
+|---|---|
+| `is_admin()` | `profiles.role = 'admin'` for the caller; the predicate every write policy uses |
+| `handle_new_user` | creates the profile the moment an auth user exists |
+| `profiles_enforce_privilege_columns` | blocks non-admins changing `role` or `badges` |
+
+That last one is not decoration. The policies on `profiles` are row-scoped but
+not column-scoped, so the owner of a row could otherwise set their own
+`role` to `admin` — and `is_admin()` reads that same column. RLS cannot express
+"every column except these two", so the restriction lives in a trigger, on
+insert as well as update.
+
+Every public-facing table is readable by anyone and writable only by admins,
+except `profiles`, where a member may edit their own row minus the two columns
+above.
+
+### Storage
+
+News media goes to a public `media` bucket — images to 5MB, video to 50MB,
+mime-restricted. Reads are public; uploads, updates and deletes require
+`is_admin()`. Deleting a news item removes its file too, but only once nothing
+else references it. Nothing private should ever be put there.
 
 ## Project structure
 
@@ -131,6 +189,7 @@ src/
     Orbit.tsx             # decorative orbital field and hero system
     MadarMark.tsx         # the club mark, animatable
     cards.tsx             # events, news, members, statistics
+    MediaField.tsx        # upload to storage, or paste an external link
     Button / Field / Modal / Badge / Toast / States
   lib/
     supabaseClient.ts     # client + username→email helper
@@ -145,6 +204,14 @@ public/
 Routes map to paths directly (`/events`, `/news`, `/admin`, …) and are driven
 by the History API — no router dependency.
 
+`clubData.ts` is worth knowing about before editing: the badge and committee
+strings there are the **join keys** against `profiles.badges`,
+`profiles.committees` and `display_members`. They are matched, never
+translated, and renaming one orphans every member holding it — which fails
+silently, by dropping them off the structure page rather than raising anything.
+`AVAILABLE_BADGES` in `i18n.ts` feeds the admin picker and has to be kept in
+step with it.
+
 ## Accessibility and RTL
 
 Direction and language are set on `<html>` and switch with the language toggle,
@@ -156,8 +223,11 @@ targets clear the 44px minimum.
 
 ## Status
 
-In development. The portal is complete and wired to Supabase; content is added
-through the admin panel.
+Live and maintained by one admin. The club's board and nine committees are
+listed; news, events and points are added through the admin panel.
+
+The leaderboard starts with every member on zero — that is the intended opening
+state, not an empty page waiting to be filled.
 
 ## License
 
