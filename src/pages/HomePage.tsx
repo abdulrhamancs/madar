@@ -70,11 +70,9 @@ export function HomePage({
         surrounded by margin.
       */}
       <section className="relative overflow-hidden">
-        {/* The figure sits behind the text layer and bleeds off the outer
-            edge. `end-*` is logical, so it moves to the left in Arabic and to
-            the right in English without a second rule. */}
-        {/* Bleeds just past the edge — enough to feel larger than the frame,
-            not so far that the outer ring is sliced into a flat chord. */}
+        {/* The figure sits behind the text layer on the outer side. `end-*` is
+            logical, so it moves to the left in Arabic and to the right in
+            English without a second rule. */}
         {/* Small screens get the motif too, but pushed into the corner and
             held well back so it never competes with Arabic text for
             legibility — the desktop system is far too large to reuse here. */}
@@ -85,12 +83,60 @@ export function HomePage({
           <OrbitSystem className="h-full w-full" parallax={false} />
         </div>
 
+        {/* Sized and placed to fill the gap between the frame edge and the
+            masthead, without touching either.
+
+            It used to hang 51px off the outer edge — only 8% of its width,
+            which is the worst amount: enough to slice a flat chord off the
+            outer ring, not enough to read as a shape deliberately continuing
+            past the frame. It now sits wholly inside, and reaches 113px
+            further inward instead, stopping about 30px short of the leftmost
+            ink in the masthead. That clearance is measured against the text's
+            *ink*, not its boxes — Arabic sets right-aligned here, so the
+            paragraph boxes run some 170px past where any glyph actually
+            starts, and sizing to them would have left the orbit far shorter
+            than it needed to be.
+
+            The height runs a little past the hero band, so the top and bottom
+            are trimmed by roughly 25px. That is deliberate and reads
+            differently from the old side clip: the band edge is a real line in
+            the layout, with the navbar above it and the next section below, so
+            the shape reads as passing behind them. The viewport edge is not
+            such a line, which is why the same trim there looked like damage.
+
+            The size steps at `xl`, and again by direction, rather than being
+            one expression.
+
+            It steps at `xl` because the text column is a percentage of the
+            shell, so its ink reaches proportionally further inward on a narrow
+            desktop — about half the viewport at 1024 against well over half at
+            1280 — while a single `vw` size does not. One value held clear at
+            1024 was far too small at 1280; sized for 1280 it ran 55px into the
+            text at 1024.
+
+            It steps by direction because the English copy is simply wider than
+            the Arabic: at 1280 the English ink reaches 676px from its edge
+            against the Arabic's 532px. A size that clears the Arabic overlaps
+            the English by 117px. At `lg` the two happen to agree, so only `xl`
+            is split.
+
+            Clearance is measured against the ink, not the element box. The
+            system rotates up to 16 degrees with scroll, which swells the
+            *bounding box* of its square frame by nearly a quarter — but the
+            content is concentric circles, whose reach does not change when
+            rotated. The widest thing drawn is an ellipse at rx 228 in a 480
+            viewBox, so the ink always stops at 95% of the half-width and the
+            box corners stay empty. Sizing against the bounding box means
+            chasing a number that moves with the scroll position. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 end-[-4%] hidden items-center lg:flex"
+          className="pointer-events-none absolute inset-y-0 end-[0.5%] hidden items-center lg:flex"
         >
-          <Enter delay={520} className="w-full">
-            <OrbitSystem className="h-[clamp(30rem,50vw,54rem)] w-[clamp(30rem,50vw,54rem)]" />
+          <Enter
+            delay={520}
+            className="[--orbit-size:clamp(22rem,min(46vw,92vh),52rem)] xl:rtl:[--orbit-size:clamp(30rem,min(56vw,92vh),56rem)] xl:ltr:[--orbit-size:clamp(28rem,min(44vw,92vh),44rem)]"
+          >
+            <OrbitSystem className="h-[var(--orbit-size)] w-[var(--orbit-size)]" />
           </Enter>
         </div>
 
