@@ -1067,7 +1067,6 @@ function MadarApp({
       onToggleTheme={toggleTheme}
       onToggleLang={toggleLang}
       onLogin={() => goToAuth("login")}
-      onRegister={() => goToAuth("register")}
       onLogout={() => setShowLogoutConfirm(true)}
     >
       {loadError && activePage === "home" ? (
@@ -1088,9 +1087,7 @@ function MadarApp({
               news={newsDb}
               events={eventsDb}
               memberCount={allMembers.length}
-              currentUser={currentUser}
               onNavigate={navigate}
-              onRegister={() => goToAuth("register")}
               getEventStatus={getEventStatus as any}
             />
           )}

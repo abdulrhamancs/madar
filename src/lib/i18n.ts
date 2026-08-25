@@ -221,7 +221,7 @@ export const translations = {
     impact_title: "مدار بالأرقام",
     join_cta_title: "مدارك يبدأ من هنا",
     join_cta_body:
-      "أنشئ حسابك، اختر لجانك، وابدأ المشاركة في فعاليات النادي.",
+      "تابع فعاليات النادي وأخباره، وتعرّف على القطاعات واللجان التي تصنع مدار.",
     explore_events: "تصفح الفعاليات",
     back_home: "العودة للرئيسية",
   },
@@ -391,7 +391,7 @@ export const translations = {
     impact_title: "Madar in numbers",
     join_cta_title: "Your orbit starts here",
     join_cta_body:
-      "Create your account, pick your committees, and start taking part in club events.",
+      "Follow the club's events and news, and meet the sectors and committees that make Madar.",
     explore_events: "Browse events",
     back_home: "Back to home",
   },

@@ -34,18 +34,14 @@ export function HomePage({
   news,
   events,
   memberCount,
-  currentUser,
   onNavigate,
-  onRegister,
   getEventStatus,
 }: {
   loading: boolean;
   news: NewsItem[];
   events: EventItem[];
   memberCount: number;
-  currentUser: unknown;
   onNavigate: (page: PageId) => void;
-  onRegister: () => void;
   getEventStatus: (e: EventItem) => EventStatus;
 }) {
   const { t, lang, formatNumber } = useI18n();
@@ -129,24 +125,29 @@ export function HomePage({
                   </p>
                 </Enter>
 
-                {!currentUser && (
-                  <Enter delay={500}>
-                    <div className="mt-10 flex flex-wrap items-center gap-7">
-                      <Button size="lg" onClick={onRegister} className="group/cta">
-                        {t("join_us")}
-                        {/* The glyph advances the way it points: `Arrow` is
-                            already direction-aware, so the nudge is too. */}
-                        <Arrow
-                          className="h-4 w-4 transition-transform duration-settle ease-entrance ltr:group-hover/cta:translate-x-1 rtl:group-hover/cta:-translate-x-1"
-                          aria-hidden="true"
-                        />
-                      </Button>
-                      <TextLink onClick={() => onNavigate("about")}>
-                        {t("read_about")}
-                      </TextLink>
-                    </div>
-                  </Enter>
-                )}
+                {/* The hero used to lead with "join us". Members are listed by
+                    the admin rather than signing up, so the primary action is
+                    now to read the club rather than to enrol in it. */}
+                <Enter delay={500}>
+                  <div className="mt-10 flex flex-wrap items-center gap-7">
+                    <Button
+                      size="lg"
+                      onClick={() => onNavigate("about")}
+                      className="group/cta"
+                    >
+                      {t("read_about")}
+                      {/* The glyph advances the way it points: `Arrow` is
+                          already direction-aware, so the nudge is too. */}
+                      <Arrow
+                        className="h-4 w-4 transition-transform duration-settle ease-entrance ltr:group-hover/cta:translate-x-1 rtl:group-hover/cta:-translate-x-1"
+                        aria-hidden="true"
+                      />
+                    </Button>
+                    <TextLink onClick={() => onNavigate("events")}>
+                      {t("explore_events")}
+                    </TextLink>
+                  </div>
+                </Enter>
               </div>
             </div>
 
@@ -405,40 +406,43 @@ export function HomePage({
         stacked against the footer. The brown CTA carries the emphasis here
         instead of the surface doing it.
       */}
-      {!currentUser && (
-        <Section tone="warm" className="relative overflow-hidden">
-          <OrbitField className="start-[-18%] top-[-34%] h-[34rem] w-[34rem] opacity-45" />
-          <Reveal
-            variant="rise"
-            className="relative mx-auto max-w-2xl text-center"
-          >
-            <h2 className="text-display text-ink">{t("join_cta_title")}</h2>
-            <p className="mx-auto mt-6 max-w-measure text-lead text-muted">
-              {t("join_cta_body")}
-            </p>
-            <div className="mt-11 flex flex-wrap items-center justify-center gap-5">
-              <Button
-                size="lg"
-                onClick={onRegister}
-                className="group/join"
-              >
-                {t("register_btn")}
-                <Arrow
-                  className="h-4 w-4 transition-transform duration-settle ease-entrance ltr:group-hover/join:translate-x-1 rtl:group-hover/join:-translate-x-1"
-                  aria-hidden="true"
-                />
-              </Button>
-              <Button
-                size="lg"
-                variant="secondary"
-                onClick={() => onNavigate("events")}
-              >
-                {t("explore_events")}
-              </Button>
-            </div>
-          </Reveal>
-        </Section>
-      )}
+      {/* Kept as the page's closing band, but it no longer invites anyone to
+          enrol — the copy and both actions now point at what there is to read.
+          Removing the band outright would have ended the page on the figures
+          block and the footer, two dark masses stacked together, which is the
+          arrangement this section exists to break up. */}
+      <Section tone="warm" className="relative overflow-hidden">
+        <OrbitField className="start-[-18%] top-[-34%] h-[34rem] w-[34rem] opacity-45" />
+        <Reveal
+          variant="rise"
+          className="relative mx-auto max-w-2xl text-center"
+        >
+          <h2 className="text-display text-ink">{t("join_cta_title")}</h2>
+          <p className="mx-auto mt-6 max-w-measure text-lead text-muted">
+            {t("join_cta_body")}
+          </p>
+          <div className="mt-11 flex flex-wrap items-center justify-center gap-5">
+            <Button
+              size="lg"
+              onClick={() => onNavigate("events")}
+              className="group/join"
+            >
+              {t("explore_events")}
+              <Arrow
+                className="h-4 w-4 transition-transform duration-settle ease-entrance ltr:group-hover/join:translate-x-1 rtl:group-hover/join:-translate-x-1"
+                aria-hidden="true"
+              />
+            </Button>
+            <Button
+              size="lg"
+              variant="secondary"
+              onClick={() => onNavigate("structure")}
+            >
+              {t("structure")}
+            </Button>
+          </div>
+        </Reveal>
+      </Section>
 
       {/* ================= FOUNDERS ================= */}
       <Section>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { LogIn, LogOut, Languages, Moon, Shield, Sun, User } from "lucide-react";
+import { LogOut, Languages, Moon, Shield, Sun, User } from "lucide-react";
 import { cx } from "../lib/cx";
 import { useI18n } from "../lib/i18nContext";
 import type { TranslationKey } from "../lib/i18n";
@@ -52,7 +52,6 @@ interface NavbarProps {
   onToggleTheme: () => void;
   onToggleLang: () => void;
   onLogin: () => void;
-  onRegister: () => void;
   onLogout: () => void;
 }
 
@@ -83,7 +82,6 @@ export function Navbar({
   onToggleTheme,
   onToggleLang,
   onLogin,
-  onRegister,
   onLogout,
 }: NavbarProps) {
   const { t } = useI18n();
@@ -178,19 +176,12 @@ export function Navbar({
                   <LogOut className="h-[1.15rem] w-[1.15rem]" />
                 </IconButton>
               </div>
-            ) : (
-              <div className="ms-2 hidden items-center gap-3 xl:flex">
-                <Button variant="ghost" onClick={onLogin}>
-                  {t("login_btn")}
-                </Button>
-                {/* The one place on the page where a filled button appears
-                    above the fold — sized up so it reads as the primary
-                    action rather than a peer of the nav links. */}
-                <Button size="lg" onClick={onRegister} className="px-6">
-                  {t("join_us")}
-                </Button>
-              </div>
-            )}
+            ) : null}
+            {/* Nothing for signed-out visitors. Members are listed by the
+                admin rather than signing up, so a "join" CTA would offer
+                something that does not exist, and the login route is for the
+                admin alone — it lives as a quiet link in the footer instead
+                of a call to action above the fold. */}
 
             <MenuToggle
               open={menuOpen}
@@ -208,8 +199,6 @@ export function Navbar({
         onNavigate={go}
         currentUser={currentUser}
         isAdmin={isAdmin}
-        onLogin={onLogin}
-        onRegister={onRegister}
         onLogout={onLogout}
       />
     </>
@@ -313,8 +302,6 @@ function MobileMenu({
   onNavigate,
   currentUser,
   isAdmin,
-  onLogin,
-  onRegister,
   onLogout,
 }: {
   open: boolean;
@@ -323,8 +310,6 @@ function MobileMenu({
   onNavigate: (page: PageId) => void;
   currentUser: { fullName?: string } | null;
   isAdmin: boolean;
-  onLogin: () => void;
-  onRegister: () => void;
   onLogout: () => void;
 }) {
   const { t } = useI18n();
@@ -409,17 +394,7 @@ function MobileMenu({
               <LogOut className="h-4 w-4" aria-hidden="true" />
               {t("logout")}
             </Button>
-          ) : (
-            <>
-              <Button size="lg" block onClick={onRegister}>
-                {t("join_us")}
-              </Button>
-              <Button variant="secondary" size="lg" block onClick={onLogin}>
-                <LogIn className="h-4 w-4" aria-hidden="true" />
-                {t("login_btn")}
-              </Button>
-            </>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

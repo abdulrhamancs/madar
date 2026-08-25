@@ -21,10 +21,12 @@ const clean = (handle: string) => handle.replace("@", "");
  */
 export function Footer({
   onNavigate,
+  onLogin,
   currentUser,
   isAdmin,
 }: {
   onNavigate: (page: PageId) => void;
+  onLogin: () => void;
   currentUser: unknown;
   isAdmin: boolean;
 }) {
@@ -138,7 +140,21 @@ export function Footer({
         {/* 13px normal text, so it needs 4.5:1 — /55 measured 4.3:1 on the
             block and failed AA. /65 clears it in both themes. */}
         <div className="flex flex-col gap-3 border-t border-on-espresso/15 py-8 text-micro text-on-espresso/65 sm:flex-row sm:items-center sm:justify-between">
-          <p>{t("made_in")}</p>
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span>{t("made_in")}</span>
+            {/* The only way into the app from the public site. Deliberately a
+                footer link rather than a navbar action: the club is listed by
+                an admin, so this is a staff door, not an invitation. */}
+            {!currentUser && (
+              <button
+                type="button"
+                onClick={onLogin}
+                className="link-underline text-on-espresso/65 transition-colors duration-quick hover:text-on-espresso"
+              >
+                {t("login_btn")}
+              </button>
+            )}
+          </p>
           {/* Only the year is guaranteed Latin — the club name switches with
               `lang` and must stay on the brand face in Arabic, so `latin` is
               scoped to the numeral instead of the whole line. */}

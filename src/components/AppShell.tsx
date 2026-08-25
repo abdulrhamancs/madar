@@ -15,7 +15,6 @@ export interface AppShellProps {
   onToggleTheme: () => void;
   onToggleLang: () => void;
   onLogin: () => void;
-  onRegister: () => void;
   onLogout: () => void;
   children: React.ReactNode;
 }
@@ -39,7 +38,6 @@ export function AppShell({
   onToggleTheme,
   onToggleLang,
   onLogin,
-  onRegister,
   onLogout,
   children,
 }: AppShellProps) {
@@ -77,7 +75,6 @@ export function AppShell({
         onToggleTheme={onToggleTheme}
         onToggleLang={onToggleLang}
         onLogin={onLogin}
-        onRegister={onRegister}
         onLogout={onLogout}
       />
 
@@ -99,6 +96,7 @@ export function AppShell({
 
       <Footer
         onNavigate={onNavigate}
+        onLogin={onLogin}
         currentUser={currentUser}
         isAdmin={isAdmin}
       />
