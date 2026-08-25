@@ -99,13 +99,25 @@
     --divider: 57 45 39;
     --control: 97 80 70;
 
-    /* The block inverts with the theme so it stays a *contrast* block: on a
-       dark page the statement surface is the pale one. The pair keeps a
-       rosy-to-warm relationship so the gradient still reads as a transition
-       rather than a flat fill. */
-    --espresso: 240 231 224;    /* 14.9:1 vs on-espresso */
-    --espresso-warm: 244 238 228;
-    --on-espresso: 27 20 22;
+    /* The block stays dark in dark mode and separates by *elevation* instead.
+       An earlier pass inverted it to cream on the theory that a statement
+       block should always be the opposite of the page — but a cream footer
+       and a cream figures band punched into an otherwise dark page read as
+       half-rendered rather than as a deliberate device, and the eye takes
+       them for a bug. Lifted and warmed above the canvas the band still
+       reads as its own surface, and the gradient keeps the same
+       warm-at-top relationship it has in light mode.
+
+       It has to clear `--raised` as well as `--canvas`: the warm tone is
+       `bg-raised/55`, which lands around #241C19, and an espresso block that
+       close to it stops being a distinct device — `tone="warm"` and
+       `tone="dark"` would render as the same band. Going *deeper* than the
+       canvas is not an option either, since #191311 is already close enough
+       to black that the darkest possible surface is only 1.14:1 away from
+       it. So the block lifts well clear of both. */
+    --espresso: 66 47 42;       /* #422F2A  1.46:1 vs canvas, 10.4:1 vs on-espresso */
+    --espresso-warm: 79 57 50;  /* #4F3932  warmer gradient head */
+    --on-espresso: 240 233 222; /* matches --ink so the block agrees with the page */
 
     /* Brightened so the ring still reads as cherry against dark surfaces. */
     --cherry: 201 100 124;      /* #C9647C */
@@ -304,24 +316,69 @@
     font-size: 0.8125rem;
   }
 
-  /* The espresso block.
-     Brown at the top settling into cherry at the foot — the transition the
-     palette is named for, done once here so every dark block on the site
-     shares it instead of each one hard-coding a fill.
+  /* The espresso block: the shared fill for every dark surface on the site,
+     defined once so no component hard-codes its own.
 
-     Vertical on purpose: a diagonal would need mirroring for RTL, and a
-     horizontal one would run the "wrong" way in Arabic. The endpoints are
-     close enough in value that this reads as a single rich surface with
-     depth in it, not as a gradient effect.
+     Warm brown at the top settling into a deeper brown at the foot. (An
+     earlier pass ran this into cherry; cherry is now an accent only — see the
+     token block above — so the endpoints are both brown.) Vertical on
+     purpose: a diagonal would need mirroring for RTL and a horizontal one
+     would run the "wrong" way in Arabic. The endpoints are close enough in
+     value that this reads as one rich surface with depth, not as a gradient
+     effect.
 
-     `background-color` is set first so the flat cherry is what shows if the
-     gradient is ever unsupported or overridden. */
+     `background-color` is set first so a flat fill shows if the gradient is
+     ever unsupported or overridden. */
   .surface-espresso {
     background-color: rgb(var(--espresso));
     background-image: linear-gradient(
       180deg,
       rgb(var(--espresso-warm)) 0%,
       rgb(var(--espresso)) 78%
+    );
+  }
+
+  /* A full-bleed dark *band* — the stats block and the footer.
+     `.surface-espresso` alone is only a fill, and a fill was the whole
+     problem: every other boundary in this design is a 1.1:1 tint or a 1.34:1
+     hairline, so an 11.8:1 edge with no border, shadow or radius did not read
+     as a device. It read as an unstyled element. Text contrast was never the
+     issue.
+
+     So the edge is stated rather than left implicit:
+
+     - a seam on both edges, in the block's own ink, at the same value the
+       stats grid already divides its cells with, so the band is delineated in
+       the vocabulary the page already uses;
+     - a short lift down from the top edge, so light appears to fall into the
+       block and the boundary has depth instead of being a flat cut.
+
+     Everything here is direction-neutral by construction — horizontal edges,
+     a vertical gradient, `inset-inline` — so RTL and LTR render identically
+     and there is no mirrored variant to keep in sync.
+
+     Applied via `Section tone="dark"` and the footer, never hand-rolled, so
+     the two instances cannot drift apart again. The auth panel deliberately
+     does not take this: it is a vertical split panel whose boundary is its
+     inline edge, not a band. */
+  .espresso-band {
+    position: relative;
+    overflow: hidden;
+    border-top: 1px solid rgb(var(--on-espresso) / 0.16);
+    border-bottom: 1px solid rgb(var(--on-espresso) / 0.16);
+  }
+
+  .espresso-band::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 7rem;
+    pointer-events: none;
+    background-image: linear-gradient(
+      180deg,
+      rgb(var(--on-espresso) / 0.06),
+      transparent
     );
   }
 

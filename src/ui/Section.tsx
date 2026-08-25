@@ -55,7 +55,9 @@ export function Section({
     canvas: "",
     surface: "bg-surface",
     warm: "bg-raised/55",
-    dark: "surface-espresso text-on-espresso",
+    // `espresso-band` carries the edge treatment that makes the inversion read
+    // as deliberate; see the note on the class in styles.css.
+    dark: "surface-espresso espresso-band text-on-espresso",
   } as const;
 
   return (

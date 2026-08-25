@@ -65,7 +65,8 @@ export function AuthPage({
           </p>
         </div>
 
-        <p className="relative text-micro text-on-espresso/45">{t("made_in")}</p>
+        {/* /60, not /45 — 13px text on the block needs 4.5:1 to clear AA. */}
+        <p className="relative text-micro text-on-espresso/60">{t("made_in")}</p>
       </aside>
 
       {/* --- form panel --- */}

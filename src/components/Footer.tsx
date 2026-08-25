@@ -2,6 +2,7 @@ import React from "react";
 import { useI18n } from "../lib/i18nContext";
 import { CLUB_DATA } from "../lib/i18n";
 import { MadarMark } from "../ui/MadarMark";
+import { OrbitField } from "../ui/Orbit";
 import { Container } from "../ui/Section";
 import {
   InstagramIcon,
@@ -62,8 +63,17 @@ export function Footer({
   );
 
   return (
-    <footer className="surface-espresso text-on-espresso">
-      <Container>
+    // Same band treatment as the stats block — one pattern, one implementation.
+    <footer className="surface-espresso espresso-band text-on-espresso">
+      {/* The other two espresso surfaces (the stats band, the auth panel) each
+          carry the orbital motif; the footer was the only one without it, which
+          left the site's largest dark area reading as a plain slab. `end-` is
+          logical, so it sits on the trailing edge in both directions. */}
+      <OrbitField
+        onDark
+        className="end-[-14%] top-[-30%] h-[34rem] w-[34rem] opacity-[0.35]"
+      />
+      <Container className="relative">
         <div className="grid gap-14 py-16 md:grid-cols-[1.4fr_1fr_1fr] md:gap-10 md:py-20">
           {/* --- mark + motto --- */}
           <div>
@@ -125,7 +135,9 @@ export function Footer({
           />
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-on-espresso/15 py-8 text-micro text-on-espresso/55 sm:flex-row sm:items-center sm:justify-between">
+        {/* 13px normal text, so it needs 4.5:1 — /55 measured 4.3:1 on the
+            block and failed AA. /65 clears it in both themes. */}
+        <div className="flex flex-col gap-3 border-t border-on-espresso/15 py-8 text-micro text-on-espresso/65 sm:flex-row sm:items-center sm:justify-between">
           <p>{t("made_in")}</p>
           {/* Only the year is guaranteed Latin — the club name switches with
               `lang` and must stay on the brand face in Arabic, so `latin` is
@@ -153,7 +165,8 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h2 className="text-micro font-medium uppercase tracking-[0.14em] text-on-espresso/45">
+      {/* /45 measured 3.4:1 dark and 3.9:1 light — below AA for 13px text. */}
+      <h2 className="text-micro font-medium uppercase tracking-[0.14em] text-on-espresso/60">
         {title}
       </h2>
       <ul className="mt-5 space-y-1">

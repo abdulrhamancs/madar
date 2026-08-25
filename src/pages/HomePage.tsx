@@ -315,7 +315,8 @@ export function HomePage({
         the whole page toward a fashion-brand register rather than a warm
         editorial one.
       */}
-      <Section tone="dark" wide className="relative overflow-hidden">
+      {/* `relative`/`overflow-hidden` come from `.espresso-band` now. */}
+      <Section tone="dark" wide>
         <OrbitField onDark className="end-[-12%] top-[-40%] h-[36rem] w-[36rem] opacity-40" />
         <div className="relative">
           <SectionHeader
