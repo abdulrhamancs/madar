@@ -34,6 +34,32 @@
 		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap">
 
 	<title>نادي مـدار — Madar</title>
+
+	<!-- Theme, applied before the first paint.
+	     React restores the stored preference, but it does so from an effect,
+	     which runs *after* the browser has already painted — so a dark-mode
+	     visitor saw a full frame of the light palette on every single load and
+	     then a jump. Reading the same key here keeps the very first frame
+	     correct. `lang`/`dir` are already right in the markup above, and the
+	     provider stays the source of truth for every later change; this only
+	     covers the gap before React mounts. Deliberately defensive: any failure
+	     falls through to the light default rather than blocking the render. -->
+	<script>
+		(function () {
+			try {
+				var raw = localStorage.getItem("madar-preferences");
+				if (!raw) return;
+				var prefs = JSON.parse(raw);
+				if (prefs && prefs.isDarkMode === true) {
+					document.documentElement.classList.add("dark");
+				}
+				if (prefs && (prefs.lang === "en" || prefs.lang === "ar")) {
+					document.documentElement.lang = prefs.lang;
+					document.documentElement.dir = prefs.lang === "ar" ? "rtl" : "ltr";
+				}
+			} catch (e) { /* no stored preference we can trust — keep the default */ }
+		})();
+	</script>
 </head>
 
 <body>

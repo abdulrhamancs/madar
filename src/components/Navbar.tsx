@@ -122,8 +122,13 @@ export function Navbar({
             </span>
           </button>
 
-          {/* --- desktop links --- */}
-          <nav aria-label={t("menu")} className="hidden lg:block">
+          {/* --- desktop links ---
+              `xl`, not `lg`: laid out on one line the wordmark, six Arabic
+              links, two icon buttons and the login/join pair need ~1156px,
+              so at the 1024px `lg` breakpoint the row was always overflowing
+              its shell and compressing the links. Below 1280px the mobile
+              menu handles navigation instead. */}
+          <nav aria-label={t("menu")} className="hidden xl:block">
             <ul className="flex items-center gap-2">
               {PRIMARY_NAV.map((item) => (
                 <li key={item.id}>
@@ -147,7 +152,7 @@ export function Navbar({
             </IconButton>
 
             {currentUser ? (
-              <div className="hidden items-center gap-1 lg:flex">
+              <div className="hidden items-center gap-1 xl:flex">
                 {isAdmin && (
                   <IconButton
                     label={t("admin_panel")}
@@ -174,7 +179,7 @@ export function Navbar({
                 </IconButton>
               </div>
             ) : (
-              <div className="hidden items-center gap-3 lg:flex ms-2">
+              <div className="ms-2 hidden items-center gap-3 xl:flex">
                 <Button variant="ghost" onClick={onLogin}>
                   {t("login_btn")}
                 </Button>
@@ -228,7 +233,12 @@ function NavLink({
       aria-current={active ? "page" : undefined}
       className={cx(
         // extra bottom padding leaves room for the active dot under the label
-        "relative rounded-md px-4 pb-4 pt-2 text-[0.9375rem] transition-colors duration-quick",
+        // `whitespace-nowrap` + `shrink-0`: as flex children these default to
+        // shrinkable with wrapping text, so once the row ran out of room the
+        // two-word Arabic labels ("نبذة عنا", "جدول النقاط") broke onto a
+        // second line and those buttons rendered 80px tall against their
+        // 52px neighbours — a visibly ragged bar.
+        "relative shrink-0 whitespace-nowrap rounded-md px-4 pb-4 pt-2 text-[0.9375rem] transition-colors duration-quick",
         active
           ? "font-medium text-ink"
           : "text-muted hover:text-ink"
@@ -268,7 +278,7 @@ function MenuToggle({
       onClick={onClick}
       aria-label={label}
       aria-expanded={open}
-      className="ms-1 inline-flex h-11 w-11 items-center justify-center rounded-md transition-colors duration-quick hover:bg-ink/[0.04] lg:hidden"
+      className="ms-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors duration-quick hover:bg-ink/[0.04] xl:hidden"
     >
       <span className="relative block h-3.5 w-5" aria-hidden="true">
         <span
@@ -355,7 +365,7 @@ function MobileMenu({
     <div
       ref={panelRef}
       id="madar-mobile-menu"
-      className="fixed inset-0 z-drawer animate-fade-in bg-canvas lg:hidden"
+      className="fixed inset-0 z-drawer animate-fade-in bg-canvas xl:hidden"
     >
       {/* clears the fixed header so the first link is never underneath it */}
       <div className="flex h-full flex-col overflow-y-auto px-gutter pb-10 pt-[5.5rem]">

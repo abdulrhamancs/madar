@@ -151,9 +151,12 @@ function MadarApp({
   setIsDarkMode,
 }: {
   lang: Lang;
-  setLang: (l: Lang) => void;
+  // `Dispatch<SetStateAction<…>>`, not `(v: T) => void`. The narrower signature
+  // made the functional update form a type error at every call site, which is
+  // what pushed the toggles below into computing from a captured value.
+  setLang: React.Dispatch<React.SetStateAction<Lang>>;
   isDarkMode: boolean;
-  setIsDarkMode: (d: boolean) => void;
+  setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const { t } = useI18n();
   const notify = useToast();
@@ -882,6 +885,16 @@ function MadarApp({
     );
   }
 
+  /**
+   * Both toggles derive the next value inside the updater rather than from the
+   * render that created the handler. Written as `setIsDarkMode(!isDarkMode)`
+   * the handler closed over the value it was built with, so two presses landing
+   * in one batch both computed the same result and React collapsed them into a
+   * single flip — the control visibly "missing" a press.
+   */
+  const toggleTheme = () => setIsDarkMode((dark) => !dark);
+  const toggleLang = () => setLang((current) => (current === "ar" ? "en" : "ar"));
+
   return (
     <AppShell
       activePage={activePage}
@@ -889,8 +902,8 @@ function MadarApp({
       currentUser={currentUser}
       isAdmin={isAdmin}
       isDark={isDarkMode}
-      onToggleTheme={() => setIsDarkMode(!isDarkMode)}
-      onToggleLang={() => setLang(lang === "ar" ? "en" : "ar")}
+      onToggleTheme={toggleTheme}
+      onToggleLang={toggleLang}
       onLogin={() => goToAuth("login")}
       onRegister={() => goToAuth("register")}
       onLogout={() => setShowLogoutConfirm(true)}

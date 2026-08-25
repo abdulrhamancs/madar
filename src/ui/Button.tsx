@@ -81,7 +81,10 @@ export function Button({
       disabled={disabled || pending}
       aria-busy={pending || undefined}
       className={cx(
-        "inline-flex items-center justify-center rounded-md font-medium",
+        // `whitespace-nowrap`: a button's label is a single action and must not
+        // break across lines — as a flex child under horizontal pressure it
+        // otherwise wraps and the control grows taller than its declared size.
+        "inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium",
         "transition-[background-color,border-color,color,opacity] duration-quick ease-standard",
         "active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
         VARIANTS[variant],
