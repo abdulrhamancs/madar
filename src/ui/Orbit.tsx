@@ -102,17 +102,7 @@ function Bodies({ bodies }: { bodies: Body[] }) {
             cy={y}
             r={body.r}
             className="fill-accent"
-            // The hero centres this system behind the masthead, so the bodies
-            // cross live text as they drift — and unlike the rings, which are
-            // hairlines, a body is a solid disc 14-23px across at that scale.
-            //
-            // The ceiling is set by the lead paragraph, which is `text-faint`
-            // and clears AA by only about half a point on bare canvas. Any
-            // wash under it spends that headroom immediately: measured against
-            // every hero text style in both themes, a body may not composite
-            // heavier than 0.075 without dropping something below 4.5:1. With
-            // the holder at 0.8 that caps the body itself just under 0.1.
-            opacity={body.dim ? 0.06 : 0.09}
+            opacity={body.dim ? 0.45 : 0.72}
           />
         );
       })}
@@ -203,11 +193,7 @@ export function OrbitSystem({
             being circled. */}
         <circle cx={CENTRE} cy={CENTRE} r="34" className="stroke-accent" strokeWidth="1" opacity="0.4" />
         <circle cx={CENTRE} cy={CENTRE} r="22" className="stroke-accent" strokeWidth="1" opacity="0.24" />
-        {/* Centred on the hero, this disc lands squarely behind the masthead
-            — about 37px across at that scale — so it answers to the same
-            ceiling as the bodies above. At 0.85 it was the heaviest mark in
-            the composition sitting on the reading line. */}
-        <circle cx={CENTRE} cy={CENTRE} r="8" className="fill-accent" opacity="0.09" />
+        <circle cx={CENTRE} cy={CENTRE} r="8" className="fill-accent" opacity="0.85" />
       </svg>
     </div>
   );
