@@ -130,6 +130,8 @@ export const translations = {
       "اسم المستخدم يجب أن يكون باللغة الإنجليزية والأرقام فقط.",
     invalid_password:
       "كلمة المرور يجب أن تكون ٨ أحرف إنجليزية/أرقام على الأقل.",
+    signup_no_session:
+      "تم إنشاء الحساب ولكن تعذّر تسجيل الدخول تلقائياً. إذا كان تأكيد البريد مفعّلاً في إعدادات المصادقة فيجب تعطيله.",
     update_profile: "تحديث البيانات",
     old_password: "كلمة المرور القديمة",
     new_password: "كلمة المرور الجديدة (اختياري)",
@@ -292,6 +294,8 @@ export const translations = {
     wrong_creds: "Invalid credentials.",
     invalid_username: "English letters/numbers only.",
     invalid_password: "Password must be at least 8 characters.",
+    signup_no_session:
+      "Account created, but it could not be signed in automatically. If email confirmation is enabled in your auth settings, it must be turned off.",
     update_profile: "Update Profile",
     old_password: "Old Password",
     new_password: "New Password (Optional)",

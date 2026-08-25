@@ -388,20 +388,46 @@ function MadarApp({
         await supabase.auth.signUp({
           email: usernameToAuthEmail(username),
           password: authForm.password,
+          // Read by the `on_auth_user_created` trigger, which writes the
+          // profile row server-side the moment the auth user exists.
+          options: {
+            data: {
+              username,
+              full_name: authForm.fullName,
+              email: authForm.email || "",
+            },
+          },
         });
       if (signUpError || !signUpData.user) {
         setAuthError(signUpError?.message || t("wrong_creds"));
         return;
       }
 
+      // No session means the client is still anonymous, so `auth.uid()` is
+      // null and the row-level policy on `profiles` will reject the write.
+      // The cause is almost always email confirmation being enabled — which
+      // can never be satisfied here, since the addresses are synthetic and
+      // cannot receive mail. Say that, rather than surfacing a raw RLS error.
+      if (!signUpData.session) {
+        setAuthError(t("signup_no_session"));
+        return;
+      }
+
+      // Upsert, not insert: the trigger has almost certainly created this row
+      // already. Keeping the write here means the profile is still correct if
+      // the trigger is ever absent, and it is what surfaces a genuine failure
+      // to the user — the trigger deliberately stays silent.
       const { data: profileRow, error: profileError } = await supabase
         .from("profiles")
-        .insert({
-          id: signUpData.user.id,
-          username,
-          full_name: authForm.fullName,
-          email: authForm.email || null,
-        })
+        .upsert(
+          {
+            id: signUpData.user.id,
+            username,
+            full_name: authForm.fullName,
+            email: authForm.email || null,
+          },
+          { onConflict: "id" }
+        )
         .select()
         .single();
       if (profileError || !profileRow) {
