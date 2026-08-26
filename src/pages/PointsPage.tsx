@@ -55,6 +55,15 @@ const RANK_RING = [
 
 const RANK_TEXT = ["text-cherry", "text-accent", "text-muted"] as const;
 
+/**
+ * One figure style for every score, podium or not.
+ *
+ * Shared rather than repeated so the two tiers cannot drift apart again:
+ * whatever the rows around it do, the column of numbers stays one column.
+ */
+const SCORE =
+  "nums latin ms-auto shrink-0 text-body font-medium text-ink sm:ms-0";
+
 /** `@handle` for a real account, otherwise whatever role we know them by. */
 function Detail({ username, detail }: { username: string; detail: string }) {
   if (username) {
@@ -298,9 +307,19 @@ export function PointsPage({
                       className="hidden flex-1 sm:block"
                     />
 
-                    <span className="nums latin ms-auto shrink-0 font-display text-h2 text-ink sm:ms-0">
-                      {formatNumber(row.points)}
-                    </span>
+                    {/* Identical to the figure on every other row, by
+                        intent. The score column is the one thing a reader
+                        scans straight down, and it only reads as a column if
+                        the figures in it are the same size — a podium score at
+                        twice the height broke that scan at exactly the rows
+                        that matter most. `font-display` also used to sit here
+                        and never applied: `.latin` is emitted later in the
+                        same utilities layer and wins the family outright.
+
+                        Rank is carried everywhere else instead — the 48px
+                        ring, the larger name, the thicker bar, the taller
+                        row. */}
+                    <span className={SCORE}>{formatNumber(row.points)}</span>
                   </div>
                   {/* Too narrow to bridge anything on a phone, so it goes back
                       under the row there. */}
@@ -347,9 +366,7 @@ export function PointsPage({
                           max={max}
                           className="hidden flex-1 sm:block"
                         />
-                        <span className="nums latin ms-auto shrink-0 text-body font-medium text-ink sm:ms-0">
-                          {formatNumber(row.points)}
-                        </span>
+                        <span className={SCORE}>{formatNumber(row.points)}</span>
                       </div>
                       <Bar
                         points={row.points}
