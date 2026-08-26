@@ -7,6 +7,8 @@ type Variant =
   | "ghost"
   | "quiet"
   | "danger"
+  // `secondary` holding an on-state — a toggle that is currently set.
+  | "selected"
   // For the espresso block. Overriding `primary` with utilities at the call
   // site does not work reliably — `bg-accent` and `bg-on-espresso` have equal
   // specificity, so the winner depends on stylesheet order, not on the order
@@ -32,6 +34,13 @@ const VARIANTS: Record<Variant, string> = {
   secondary:
     "border border-control text-ink hover:border-accent hover:bg-accent/[0.06] " +
     "active:bg-accent/[0.1] disabled:hover:bg-transparent disabled:hover:border-control",
+  // A variant rather than utilities passed to `secondary` at the call site, for
+  // the same reason `inverse` is one: `border-accent` and `border-control` have
+  // equal specificity, and Tailwind emits them in palette order, so the override
+  // silently loses and the on-state renders identical to the off-state.
+  selected:
+    "border border-accent bg-accent/[0.1] text-accent hover:bg-accent/[0.16] " +
+    "active:bg-accent/[0.2] disabled:hover:bg-accent/[0.1]",
   ghost: "text-ink hover:bg-ink/[0.05] active:bg-ink/[0.08]",
   // Reads as body copy until hovered — for tertiary actions inside content.
   quiet:

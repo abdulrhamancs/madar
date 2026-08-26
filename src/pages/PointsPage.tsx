@@ -1,6 +1,9 @@
 import React from "react";
+import { Crown } from "lucide-react";
 import { useI18n } from "../lib/i18nContext";
+import { seatBadges } from "../lib/clubData";
 import { cx } from "../lib/cx";
+import { HonourEmblem } from "../ui/Badge";
 import { PageHeader } from "../ui/Section";
 import { EmptyState, ErrorState, Skeleton } from "../ui/States";
 import { Reveal, RevealGroup } from "../ui/Reveal";
@@ -27,6 +30,8 @@ interface Entry {
   username: string;
   /** Their role or committee, shown when there is no handle to show. */
   detail: string;
+  /** The raw column, so the emblem resolves an honour from it itself. */
+  badges: string[];
   points: number;
 }
 
@@ -120,8 +125,9 @@ function Bar({
  *
  * Ranking is carried by typographic scale and a share bar rather than by
  * trophies or a podium — the top three get more room, a larger figure and a
- * ring around their position. That keeps a competitive table looking like a
- * club record rather than a game score screen.
+ * ring around their position, and first place alone is sealed with a crown.
+ * That keeps a competitive table looking like a club record rather than a
+ * game score screen.
  *
  * Everyone in the club appears from the start, on nothing. Points live in
  * their own table keyed by name, so before this the board listed only people
@@ -160,7 +166,10 @@ export function PointsPage({
       key: m.id,
       name: m.fullName,
       username: m.username || "",
-      detail: (m.badges || [])[0] || (m.committees || [])[0] || "",
+      // Seats only. An honour already shows as an emblem beside the name, so
+      // reading it here too would print the same fact twice in one row.
+      detail: seatBadges(m.badges)[0] || (m.committees || [])[0] || "",
+      badges: m.badges || [],
       points: scoreOf.get(m.fullName) ?? 0,
     }));
 
@@ -176,6 +185,7 @@ export function PointsPage({
         name: p.name,
         username: "",
         detail: "",
+        badges: [],
         points: p.points,
       })
     );
@@ -239,18 +249,44 @@ export function PointsPage({
                         of single accent: the logo ring, one orbital path. */}
                     <span
                       className={cx(
-                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border",
+                        "relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border",
                         RANK_RING[index]
                       )}
                     >
                       <span className={cx("nums latin text-h4", RANK_TEXT[index])}>
                         {formatNumber(index + 1)}
                       </span>
+                      {/* First place, and only first place, is sealed.
+                          The crown sits on the ring's edge rather than inside
+                          it, so the numeral keeps its full size and the row
+                          still reads as a ranked list rather than a trophy
+                          shelf. `bg-canvas` cuts the hairline behind it, which
+                          is what makes it read as set into the ring instead of
+                          floating over it.
+
+                          `left-1/2` is physical on purpose: centring is the
+                          same operation in both directions, and pairing a
+                          logical `start-1/2` with a physical `-translate-x-1/2`
+                          would send it off the ring in Arabic.
+
+                          Withheld while the board is on nothing. First place
+                          is alphabetical until somebody scores, and a crown on
+                          an unearned lead is the same untruth the share bars
+                          already refuse to tell by drawing themselves empty. */}
+                      {index === 0 && row.points > 0 && (
+                        <span className="absolute -top-2 left-1/2 flex -translate-x-1/2 items-center bg-canvas px-1 text-cherry">
+                          <Crown className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span className="sr-only">{t("rank_first")}</span>
+                        </span>
+                      )}
                     </span>
 
                     <span className="min-w-0 shrink">
-                      <span className="block truncate font-display text-h2 text-ink">
-                        {row.name}
+                      <span className="flex items-center gap-2.5">
+                        <span className="min-w-0 truncate font-display text-h2 text-ink">
+                          {row.name}
+                        </span>
+                        <HonourEmblem badges={row.badges} />
                       </span>
                       <Detail username={row.username} detail={row.detail} />
                     </span>
@@ -298,8 +334,11 @@ export function PointsPage({
                           {formatNumber(index + 4)}
                         </span>
                         <span className="min-w-0 shrink">
-                          <span className="block truncate text-body text-ink">
-                            {row.name}
+                          <span className="flex items-center gap-2">
+                            <span className="min-w-0 truncate text-body text-ink">
+                              {row.name}
+                            </span>
+                            <HonourEmblem badges={row.badges} size="sm" />
                           </span>
                           <Detail username={row.username} detail={row.detail} />
                         </span>

@@ -3,7 +3,7 @@ import { Check, ExternalLink, Users } from "lucide-react";
 import { cx } from "../lib/cx";
 import { initialsOf } from "../lib/initials";
 import { useI18n } from "../lib/i18nContext";
-import { Badge, Tag, type Tone } from "./Badge";
+import { Badge, HonourEmblem, Tag, type Tone } from "./Badge";
 import { Button } from "./Button";
 
 /**
@@ -339,12 +339,19 @@ export function MemberCard({
   name,
   username,
   roles = [],
+  badges,
   onClick,
   compact = false,
 }: {
   name: string;
   username?: string;
   roles?: string[];
+  /**
+   * The member's raw `badges` column. Only the compact card reads it, and only
+   * to resolve an honour — the board card shows its seat, which is the higher
+   * distinction of the two and should not have a second emblem competing.
+   */
+  badges?: string[];
   onClick?: () => void;
   /**
    * A single row instead of a tile, for the committee rosters.
@@ -386,6 +393,9 @@ export function MemberCard({
             </span>
           )}
         </span>
+        {/* Sits at the inline end, in the space the row already had spare, so
+            an honour never costs the name any width. */}
+        <HonourEmblem badges={badges} size="sm" />
       </button>
     );
   }

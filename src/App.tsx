@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { supabase, usernameToAuthEmail } from "./lib/supabaseClient";
 import { createT, type Lang } from "./lib/i18n";
 import { initialsOf } from "./lib/initials";
+import { DISTINGUISHED, mergeBadges } from "./lib/clubData";
 import { I18nProvider, useI18n } from "./lib/i18nContext";
 import { ToastProvider, useToast } from "./ui/Toast";
 import { AppShell, type PageId } from "./components/AppShell";
@@ -687,6 +688,40 @@ function MadarApp({
       setCurrentUser({ ...currentUser, badges: updatedBadges });
   };
 
+  /**
+   * Grant or revoke the one manual honour on a real account.
+   *
+   * It writes the same `profiles.badges` column the seat picker writes, which
+   * is the point: nothing new is stored, and the existing guard applies
+   * unchanged — `profiles_enforce_privilege_columns` rejects any change to
+   * `badges` from a caller `is_admin()` says no to, whichever control made it.
+   *
+   * It is still a separate control from that picker, because the two say
+   * different things. The picker names a position and there is one of each;
+   * this names an accolade and adds to whatever the member already holds.
+   */
+  const handleToggleMemberHonour = async (username: string) => {
+    const targetUser = usersDb.find((u) => u.username === username);
+    if (!targetUser) return;
+    const badges: string[] = targetUser.badges || [];
+    const updatedBadges = badges.includes(DISTINGUISHED)
+      ? badges.filter((b) => b !== DISTINGUISHED)
+      : [...badges, DISTINGUISHED];
+    const { error } = await supabase
+      .from("profiles")
+      .update({ badges: updatedBadges })
+      .eq("id", targetUser.id);
+    if (error) return fail(error);
+    setUsersDb(
+      usersDb.map((u) =>
+        u.id === targetUser.id ? { ...u, badges: updatedBadges } : u
+      )
+    );
+    if (currentUser?.id === targetUser.id)
+      setCurrentUser({ ...currentUser, badges: updatedBadges });
+    notify(t("saved"));
+  };
+
   const handleDeleteUser = async (username: string) => {
     const targetUser = usersDb.find((u) => u.username === username);
     if (!targetUser || targetUser.role === "admin") return;
@@ -862,24 +897,28 @@ function MadarApp({
 
   const handleUpdateDisplayMember = async (
     id: string,
-    patch: { fullName?: string; badge?: string; committee?: string; points?: string }
+    patch: {
+      fullName?: string;
+      badge?: string;
+      committee?: string;
+      points?: string;
+      /** Grant (true) or revoke (false) the manual honour. */
+      honour?: boolean;
+    }
   ) => {
     const existing = displayMembersDb.find((m) => m.id === id);
     if (!existing) return;
     const nextName = (patch.fullName ?? existing.fullName).trim();
     if (!nextName) return;
 
+    const nextBadges = mergeBadges(existing.badges, patch);
+
     setAdminPending(true);
     const { data, error } = await supabase
       .from("display_members")
       .update({
         full_name: nextName,
-        badges:
-          patch.badge !== undefined
-            ? patch.badge
-              ? [patch.badge]
-              : []
-            : existing.badges,
+        badges: nextBadges,
         committees:
           patch.committee !== undefined
             ? patch.committee
@@ -1243,6 +1282,7 @@ function MadarApp({
               }
               onAssignBadge={handleAssignBadge}
               onRemoveBadge={handleRemoveBadge}
+              onToggleMemberHonour={handleToggleMemberHonour}
               onDeleteUser={setConfirmDeleteUser}
               newsForm={adminNewsForm}
               onNewsFormChange={setAdminNewsForm}

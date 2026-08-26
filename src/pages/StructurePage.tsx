@@ -193,6 +193,7 @@ export function StructurePage({
                                     compact
                                     name={member.fullName}
                                     username={member.username}
+                                    badges={member.badges}
                                     onClick={() => onViewMember(member)}
                                   />
                                 </li>

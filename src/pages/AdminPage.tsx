@@ -1,16 +1,60 @@
 import React from "react";
-import { Plus, Trash2, Users, Ban } from "lucide-react";
+import { Award, Plus, Trash2, Users, Ban } from "lucide-react";
 import { useI18n } from "../lib/i18nContext";
 import { AVAILABLE_BADGES } from "../lib/i18n";
-import { CLUB_SECTORS } from "../lib/clubData";
+import { CLUB_SECTORS, DISTINGUISHED, isHonour, seatBadges } from "../lib/clubData";
 import { cx } from "../lib/cx";
 import { PageHeader } from "../ui/Section";
 import { Button, IconButton } from "../ui/Button";
-import { Badge } from "../ui/Badge";
+import { Badge, HonourEmblem } from "../ui/Badge";
 import { SelectField, TextArea, TextField } from "../ui/Field";
 import { MediaField } from "../ui/MediaField";
 import { EmptyState } from "../ui/States";
 import { Reveal } from "../ui/Reveal";
+
+/**
+ * The pickers assign a *position*, so the honours are filtered out of them.
+ *
+ * They share one column with the seats, and the pickers are single-value: an
+ * honour chosen there would be written as the member's seat and would take the
+ * real one's place. It gets its own control instead — see `HonourToggle`.
+ */
+const SEAT_BADGES = AVAILABLE_BADGES.filter((badge) => !isHonour(badge));
+
+/**
+ * Grant or revoke the manual honour.
+ *
+ * One control for both directions, because it is one fact about a member and
+ * an admin should not have to look in two places to find its current value.
+ * State is carried by `aria-pressed` and by the filled accent treatment — the
+ * same tint the badge chips use, so the on-state reads as "holds this" rather
+ * than as a different kind of button.
+ */
+function HonourToggle({
+  granted,
+  size = "md",
+  disabled,
+  onToggle,
+}: {
+  granted: boolean;
+  size?: "sm" | "md";
+  disabled?: boolean;
+  onToggle: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <Button
+      variant={granted ? "selected" : "secondary"}
+      size={size}
+      aria-pressed={granted}
+      disabled={disabled}
+      onClick={onToggle}
+    >
+      <Award className="h-4 w-4" aria-hidden="true" />
+      {granted ? t("revoke_distinguished") : t("grant_distinguished")}
+    </Button>
+  );
+}
 
 type Tab = "members" | "display" | "news" | "points" | "events";
 
@@ -43,6 +87,7 @@ export interface AdminPageProps {
   onBadgeSelect: (username: string, badge: string) => void;
   onAssignBadge: (username: string) => void;
   onRemoveBadge: (username: string, badge: string) => void;
+  onToggleMemberHonour: (username: string) => void;
   onDeleteUser: (username: string) => void;
 
   newsForm: any;
@@ -67,6 +112,7 @@ export interface AdminPageProps {
       badge?: string;
       committee?: string;
       points?: string;
+      honour?: boolean;
     }
   ) => void;
   onDeleteDisplayMember: (id: string) => void;
@@ -178,6 +224,7 @@ function MembersTab({
   onBadgeSelect,
   onAssignBadge,
   onRemoveBadge,
+  onToggleMemberHonour,
   onDeleteUser,
 }: AdminPageProps) {
   const { t } = useI18n();
@@ -188,7 +235,14 @@ function MembersTab({
     <>
       <RecordCount label={t("members_count")} value={members.length} />
       <ul className="divide-y divide-divider border-y border-divider">
-        {members.map((member) => (
+        {members.map((member) => {
+          // Seats and the honour share one column but are two different facts,
+          // so each gets one home: the chips below list positions, the toggle
+          // at the end of the row carries the accolade.
+          const seats = seatBadges(member.badges);
+          const granted = (member.badges || []).includes(DISTINGUISHED);
+
+          return (
           <li key={member.id} className="py-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
@@ -211,9 +265,9 @@ function MembersTab({
               )}
             </div>
 
-            {member.badges?.length > 0 && (
+            {seats.length > 0 && (
               <ul className="mt-4 flex flex-wrap gap-2">
-                {member.badges.map((badge: string) => (
+                {seats.map((badge: string) => (
                   <li key={badge}>
                     <span className="inline-flex items-center gap-1.5 rounded-sm border border-accent/30 bg-accent/[0.09] px-2.5 py-1 text-micro font-medium leading-none text-accent">
                       {badge}
@@ -246,7 +300,7 @@ function MembersTab({
                   onChange={(e) => onBadgeSelect(member.username, e.target.value)}
                 >
                   <option value="">—</option>
-                  {AVAILABLE_BADGES.map((badge) => (
+                  {SEAT_BADGES.map((badge) => (
                     <option key={badge} value={badge}>
                       {badge}
                     </option>
@@ -261,9 +315,14 @@ function MembersTab({
                 <Plus className="h-4 w-4" />
                 {t("add_btn")}
               </Button>
+              <HonourToggle
+                granted={granted}
+                onToggle={() => onToggleMemberHonour(member.username)}
+              />
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </>
   );
@@ -400,7 +459,7 @@ function DisplayMembersTab({
             onChange={(e) => set({ badge: e.target.value })}
           >
             <option value="">{t("display_none")}</option>
-            {AVAILABLE_BADGES.map((badge) => (
+            {SEAT_BADGES.map((badge) => (
               <option key={badge} value={badge}>
                 {badge}
               </option>
@@ -481,20 +540,28 @@ function DisplayMemberRow({
 }) {
   const { t, formatNumber } = useI18n();
   const [open, setOpen] = React.useState(false);
+  // `badge` is the seat only. Reading `badges[0]` would put an honour in the
+  // seat picker, and saving would then write it back as the member's position.
   const [draft, setDraft] = React.useState({
     fullName: member.fullName,
-    badge: member.badges[0] || "",
+    badge: seatBadges(member.badges)[0] || "",
     committee: member.committees[0] || "",
     points: points === undefined ? "" : String(points),
+    honour: (member.badges || []).includes(DISTINGUISHED),
   });
 
   return (
     <li className="py-5">
       <div className="flex flex-wrap items-center gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-body font-medium text-ink">{member.fullName}</p>
+          <div className="flex items-center gap-2">
+            <p className="min-w-0 truncate text-body font-medium text-ink">
+              {member.fullName}
+            </p>
+            <HonourEmblem badges={member.badges} size="sm" />
+          </div>
           <p className="mt-1 text-micro text-faint">
-            {[member.badges[0], member.committees[0]]
+            {[seatBadges(member.badges)[0], member.committees[0]]
               .filter(Boolean)
               .join(" · ") || t("display_none")}
           </p>
@@ -543,7 +610,7 @@ function DisplayMemberRow({
             onChange={(e) => setDraft({ ...draft, badge: e.target.value })}
           >
             <option value="">{t("display_none")}</option>
-            {AVAILABLE_BADGES.map((badge) => (
+            {SEAT_BADGES.map((badge) => (
               <option key={badge} value={badge}>
                 {badge}
               </option>
@@ -561,6 +628,15 @@ function DisplayMemberRow({
               </option>
             ))}
           </SelectField>
+          {/* Part of the draft, not an immediate write — everything else in
+              this panel waits for Save, and one control that did not would be
+              the only thing here that could not be reconsidered. */}
+          <div className="sm:col-span-2">
+            <HonourToggle
+              granted={draft.honour}
+              onToggle={() => setDraft({ ...draft, honour: !draft.honour })}
+            />
+          </div>
           <div className="sm:col-span-2">
             <Button
               pending={pending}

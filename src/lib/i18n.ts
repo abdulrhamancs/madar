@@ -163,6 +163,12 @@ export const translations = {
     my_badges: "أوسمتي ومناصبي",
     vacant: "شاغر",
     assign_badge: "منح وسام/منصب",
+    // The badge string itself is a join key and is never translated —
+    // this is the accessible name for the emblem that stands in for it.
+    distinguished_member: "عضو متميز",
+    grant_distinguished: "منح وسام التميز",
+    revoke_distinguished: "سحب وسام التميز",
+    rank_first: "المركز الأول",
     social_links: "حسابات التواصل",
     news_title_input: "عنوان الخبر",
     news_content_input: "التفاصيل (المحتوى)",
@@ -350,6 +356,10 @@ export const translations = {
     my_badges: "My Badges & Roles",
     vacant: "Vacant",
     assign_badge: "Assign Badge/Role",
+    distinguished_member: "Distinguished Member",
+    grant_distinguished: "Grant distinction",
+    revoke_distinguished: "Revoke distinction",
+    rank_first: "First place",
     social_links: "Social Links",
     news_title_input: "News Title",
     news_content_input: "Content",
