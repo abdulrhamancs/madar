@@ -20,6 +20,22 @@ export const CLUB_DATA = {
 };
 
 
+/**
+ * The WhatsApp deep link — but only once there is a number to link to.
+ *
+ * `+966 5X XXX XXXX` stripped of non-digits leaves `9665`: four digits that
+ * still form a perfectly well-shaped `wa.me` URL pointing at nobody. That is
+ * worse than an obvious gap, because the control looks live and only fails
+ * after a visitor taps it. So the link exists only when the number could
+ * plausibly dial — no letters standing in for digits, and enough digits left
+ * to be a real number. Callers render plain text when this returns null.
+ */
+export function whatsappHref(number: string): string | null {
+  if (/[A-Za-z]/.test(number)) return null;
+  const digits = number.replace(/\D/g, "");
+  return digits.length >= 9 ? `https://wa.me/${digits}` : null;
+}
+
 export const AVAILABLE_BADGES = [
   "رئيس النادي",
   "نائب الرئيس",

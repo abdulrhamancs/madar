@@ -73,12 +73,46 @@ export function HomePage({
         {/* The figure sits behind the text layer on the outer side. `end-*` is
             logical, so it moves to the left in Arabic and to the right in
             English without a second rule. */}
-        {/* Small screens get the motif too, but pushed into the corner and
-            held well back so it never competes with Arabic text for
-            legibility — the desktop system is far too large to reuse here. */}
+        {/* Small screens get the motif too, tucked into the top corner on the
+            `end` side — the same side the desktop system uses, and the one the
+            text does not align to. That second point is what makes it work:
+            the copy sets flush to the `start` edge, so its ragged edge faces
+            this corner and leaves room that grows as the lines shorten. On
+            `start`, where this used to sit, every line ran straight into it.
+
+            The old placement failed contrast. Measured on a phone, the centre
+            dot and the drifting bodies sat behind the headline, the motto and
+            the lead at up to 1.96:1 — against 3:1 and 4.5:1. Not the rings
+            alone either: those are hairlines with air between them, and text
+            can fall in the gaps, but the filled centre and the bodies are
+            solid and the bodies sweep every angle as they drift, so anything
+            inside their radius is behind one of them sooner or later.
+
+            The size and offset are solved, not guessed, and solved against
+            *English* — the harder of the two. Arabic sets narrower here, so a
+            figure that clears the English hero clears the Arabic one with room
+            to spare, while the reverse is not true: sized to Arabic it left the
+            English eyebrow at 4.65:1 against a 4.5 floor, which passes on this
+            render and on no promise beyond it.
+
+            The largest circle that clears every English run by 10px, with the
+            focal point still on screen, has r=114. Since the ink stops at 95%
+            of the half-width, that is 15rem square. It is a real cut from the
+            28rem this used to be, and it is the price of the figure and the
+            copy not sharing pixels on a 375px screen — the hero text fills
+            that viewport, so there is no large gap to move into, only a corner.
+            The opacity is untouched at 0.45, which was the point.
+
+            The offset is a fixed length, not a percentage. A percentage
+            resolves against the container, so it grew with the viewport and
+            dragged the figure out of frame: at 767px, the last width before the
+            desktop system takes over, the percentage version left two pixels of
+            it on screen. A fixed inset keeps the same amount in the corner at
+            every width it is used at. Desktop was already clear at every width
+            and is not involved. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-24 start-[-45%] h-[28rem] w-[28rem] opacity-45 lg:hidden"
+          className="pointer-events-none absolute -top-[6.5rem] end-[-7.5rem] h-[15rem] w-[15rem] opacity-45 lg:hidden"
         >
           <OrbitSystem className="h-full w-full" parallax={false} />
         </div>

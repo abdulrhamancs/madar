@@ -1,7 +1,8 @@
 import React from "react";
 import { Mail } from "lucide-react";
 import { useI18n } from "../lib/i18nContext";
-import { CLUB_DATA } from "../lib/i18n";
+import { CLUB_DATA, whatsappHref } from "../lib/i18n";
+import { cx } from "../lib/cx";
 import { PageHeader, Eyebrow } from "../ui/Section";
 import { Reveal, RevealGroup } from "../ui/Reveal";
 import { OrbitField } from "../ui/Orbit";
@@ -84,7 +85,9 @@ export function ContactPage() {
       key: "whatsapp",
       name: "WhatsApp",
       label: contact.whatsapp,
-      href: `https://wa.me/${contact.whatsapp.replace(/[^\d]/g, "")}`,
+      // Null while the number is a placeholder — the row still shows what it
+      // shows, it just stops pretending to be a button. See `whatsappHref`.
+      href: whatsappHref(contact.whatsapp),
       Icon: WhatsAppIcon,
     },
     {
@@ -126,14 +129,12 @@ export function ContactPage() {
         as="ul"
         className="mt-16 divide-y divide-divider border-y border-divider"
       >
-        {channels.map(({ key, name, label, href, Icon }) => (
-          <li key={key}>
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="group -mx-4 flex min-h-[5.5rem] items-center gap-5 px-4 transition-colors duration-settle hover:bg-raised/40 sm:gap-8"
-            >
+        {channels.map(({ key, name, label, href, Icon }) => {
+          // Identical row either way. Only the wrapper changes, so a channel
+          // that cannot be linked yet still reads as one of the set rather
+          // than as a broken or missing entry.
+          const row = (
+            <>
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-divider text-accent transition-colors duration-settle group-hover:border-accent/50">
                 <Icon className="h-4 w-4" />
               </span>
@@ -146,9 +147,32 @@ export function ContactPage() {
               >
                 {label}
               </span>
-            </a>
-          </li>
-        ))}
+            </>
+          );
+          const shell = "-mx-4 flex min-h-[5.5rem] items-center gap-5 px-4 sm:gap-8";
+
+          return (
+            <li key={key}>
+              {href ? (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={cx(
+                    "group transition-colors duration-settle hover:bg-raised/40",
+                    shell
+                  )}
+                >
+                  {row}
+                </a>
+              ) : (
+                // No `group`, no hover, no pointer: nothing here suggests
+                // there is anything to press.
+                <div className={shell}>{row}</div>
+              )}
+            </li>
+          );
+        })}
       </RevealGroup>
     </div>
   );

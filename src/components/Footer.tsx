@@ -1,6 +1,6 @@
 import React from "react";
 import { useI18n } from "../lib/i18nContext";
-import { CLUB_DATA } from "../lib/i18n";
+import { CLUB_DATA, whatsappHref } from "../lib/i18n";
 import { MadarMark } from "../ui/MadarMark";
 import { OrbitField } from "../ui/Orbit";
 import { Container } from "../ui/Section";
@@ -52,12 +52,20 @@ export function Footer({
       Icon: TikTokIcon,
       label: "TikTok",
     },
-    {
-      key: "whatsapp",
-      href: `https://wa.me/${contact.whatsapp.replace(/[^\d]/g, "")}`,
-      Icon: WhatsAppIcon,
-      label: "WhatsApp",
-    },
+    // Dropped entirely while the number is a placeholder, rather than left as
+    // a dead circle. These are icons with no text beside them, so an entry
+    // that cannot be followed has nothing left to say — the contact page still
+    // lists the number itself. See `whatsappHref`.
+    ...(whatsappHref(contact.whatsapp)
+      ? [
+          {
+            key: "whatsapp",
+            href: whatsappHref(contact.whatsapp) as string,
+            Icon: WhatsAppIcon,
+            label: "WhatsApp",
+          },
+        ]
+      : []),
   ];
 
   const secondary = SECONDARY_NAV.filter(
