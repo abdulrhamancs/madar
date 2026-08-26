@@ -25,8 +25,11 @@ whole codebase: most people on the site have no `auth.users` row at all.
 - **News** — magazine layout, with media uploaded from the device or linked
   externally (YouTube and the like)
 - **Leaderboard** — every member from the start, on zero until they score,
-  ranked with a share bar; admins run it rather than compete on it
+  ranked with a share bar; admins run it rather than compete on it. First
+  place is sealed with a crown once anyone has actually scored
 - **Member profiles** — badges, committees, social links
+- **Honours** — an admin-granted mark (`عضو متميز`) shown as an emblem beside
+  the name, on the leaderboard and the committee rosters
 - **Admin panel** — members, listed members, news, points and events, in the
   same design system
 - **Light / dark theme** and **Arabic ⇄ English**, both persisted
@@ -165,10 +168,14 @@ above.
 
 ### Storage
 
-News media goes to a public `media` bucket — images to 5MB, video to 50MB,
-mime-restricted. Reads are public; uploads, updates and deletes require
-`is_admin()`. Deleting a news item removes its file too, but only once nothing
-else references it. Nothing private should ever be put there.
+News media goes to a public `media` bucket. Reads are public; uploads, updates
+and deletes require `is_admin()`. Deleting a news item removes its file too,
+but only once nothing else references it. Nothing private should ever be put
+there.
+
+The bucket itself caps uploads at 50MB and accepts five mime types. The tighter
+5MB limit on images is `MediaField`'s alone — client-side, so treat it as a
+courtesy to the uploader rather than as enforcement.
 
 ## Project structure
 
@@ -212,14 +219,22 @@ silently, by dropping them off the structure page rather than raising anything.
 `AVAILABLE_BADGES` in `i18n.ts` feeds the admin picker and has to be kept in
 step with it.
 
+Not every badge names a seat. `HONOURS` in `clubData.ts` marks the ones that are
+an accolade instead, which is what keeps them out of the single-value seat
+pickers and out of the subtitle under a name on the leaderboard. Add an honour
+there, not just to `AVAILABLE_BADGES`, or it will be offered as a position and
+overwrite a real one.
+
 ## Accessibility and RTL
 
 Direction and language are set on `<html>` and switch with the language toggle,
 so screen readers and CSS logical properties both follow. Layout is written in
 logical properties (`start`/`end`, `ms`/`me`) throughout, which is why the
 whole UI mirrors correctly rather than only flipping text. Dialogs trap focus
-and restore it on close, every control has a real label, and interactive
-targets clear the 44px minimum.
+and restore it on close, and every control has a real label. Standalone
+controls clear the 44px target minimum; the one exception is the quiet login
+link in the footer, which is a text link inside a sentence and takes the
+inline exception instead.
 
 ## Status
 

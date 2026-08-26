@@ -106,16 +106,28 @@ export function Navbar({
         {/* `shell-wide` so the bar's margins line up with the hero beneath
             it — on a wide monitor the old narrow shell left the navigation
             visibly inset from the composition it sits above. */}
-        <div className="shell-wide flex h-[4.75rem] items-center justify-between gap-8 lg:h-[5.5rem]">
+        {/* `gap-2` below `sm`, not `gap-8`. With `justify-between` the gap is
+            only ever a floor — the two groups are pushed to the edges whenever
+            there is room, so a wide gap buys nothing and costs 32px at exactly
+            the width where there is none. At 375px the English wordmark is
+            ~25px wider than the Arabic one, which was enough to push the menu
+            button 1.2px past the viewport and strip its gutter entirely. */}
+        <div className="shell-wide flex h-[4.75rem] items-center justify-between gap-2 sm:gap-8 lg:h-[5.5rem]">
           {/* --- wordmark --- */}
           <button
             type="button"
             onClick={() => go("home")}
-            className="group -ms-2 flex shrink-0 items-center gap-3.5 rounded-md px-2 py-2"
+            /* Shrinkable, where the controls beside it are not: a 44px
+               control cannot give ground without dropping under the touch
+               minimum, so if anything has to yield it is the wordmark. It
+               does not yield at any width the site is built for — this is the
+               guard that keeps a longer translation or a fallback face from
+               reaching the viewport edge again. */
+            className="group -ms-2 flex min-w-0 items-center gap-3.5 rounded-md px-2 py-2"
             aria-label={t("madar_club")}
           >
             <MadarMark className="h-9 w-9 shrink-0 transition-transform duration-[1200ms] ease-entrance group-hover:rotate-[40deg] lg:h-10 lg:w-10" />
-            <span className="font-display text-h3 tracking-tight text-ink">
+            <span className="truncate font-display text-h3 tracking-tight text-ink">
               {t("madar_club")}
             </span>
           </button>
